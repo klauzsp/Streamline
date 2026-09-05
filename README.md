@@ -13,7 +13,7 @@ npm run build
 npm start
 ```
 
-Open **http://localhost:3000** and select **Load Demo Migration**.
+Open **http://localhost:3000** and select **Try the 3-minute demo**.
 
 For development, use `npm run dev`. The scripts use Next.js's webpack compiler because Turbopack's CSS worker cannot bind its internal port in this workspace's sandbox. Stop the development server before building; use the production server for the demo.
 
@@ -33,17 +33,20 @@ Requires Node.js 22+ and Python 3 with the standard library. No Python packages,
 
 The reference **Upload Template is never used to generate loader records**. Source files are not modified.
 
-## Three-minute demo
+## Three-minute demo — start here
 
-1. Load the demo. Show 33,902 source rows and the actual readiness score.
-2. Open **Exceptions**. Open the first suggested deal/position mapping: source position `Clanford`, context `Operations (USD)`.
-3. Explain that the source has no position ID; the reference provides a deal-only mapping. Inspect a source row, select the proposal and enter a demo reviewer rationale confirming that no position is needed. Approve it.
-4. Readiness rises from **17% to 63%**, and eligible rows rise from **6,078 to 21,548**. These are calculated results, not scripted counters.
-5. Open the account gap for **40070 - Interest Income - Bank / Expense: Administration Fees**. Click **Investigate source evidence**. The Mapping Gaps sheet supplies an unapproved proposal. Review and approve with a rationale.
-6. Rerun reconciliation; open a failed check to see exact amounts and held-row coverage.
-7. Download the **draft review package**, showing the loader, exceptions, reconciliation and source audit.
+Open **http://localhost:3000** and click **Try the 3-minute demo**. You are the incoming administrator onboarding Westvale from Legacy Admin into Corvus.
 
-The all-entity source has more scope than the reference tranche. A fresh case correctly starts with **139 mapping decisions and 150 exceptions**. Two demonstration approvals do **not** resolve the entire dataset. Verified export remains gated; there is no artificial “approve everything” shortcut. Tests also exercise a fully resolved case and its verified-export path.
+1. **Understand the handover.** All **528 real source records for Westvale** are included. There are **two decisions**, not a queue of 150 exceptions.
+2. **Review the first decision.** Confirm whether everyday fund activity belongs in the GBP operations record without an investment position. Inspect the evidence, tick the confirmation and approve. Ready records rise from **132 to 484**.
+3. **Review the second decision.** An account says “Interest Income – Bank”, while its transaction type says “Administration Fees”. Use **Investigate with Gemini**, inspect the evidence and confirm the appropriate classification. The final batch is released: **528 of 528 records ready**.
+4. **Check & download.** All **28 amount checks** pass. Download a **verified demo package** containing the loader and audit evidence. Nothing is uploaded to Corvus.
+
+If you do not know an answer, choose **Ask previous administrator**. The app prepares a specific request with original source references. **Save & download request** records it locally and downloads a text draft; it sends no email. The rows remain held. When confirmation arrives, enter the administrator's response, review the target and approve. The demo does not fabricate a reply.
+
+This is a complete legal-entity slice, with every Westvale batch intact. The other **33,374 records** in the original workbook are outside this demo's scope. That scope is disclosed in the UI and the exported Migration Summary; no full-workbook verification is claimed.
+
+The original detailed interface is still available at **/advanced**, including uploads, the entire source workbook, exception tables, mapping edits and source provenance. A **Detailed workspace** link opens the current case there. Existing cases and decisions are preserved.
 
 ## Gemini later
 
@@ -69,7 +72,7 @@ GEMINI_MODEL=gemini-2.5-flash
 
 Alternatively, Vertex Express mode accepts `AI_PROVIDER=vertex` plus its own `GEMINI_API_KEY`, without a project. An AI Studio key and a Vertex key are different provider configurations. The model name is configurable.
 
-The adapter calls the configured model only when a reviewer starts an investigation. It sends a bounded source sample and existing candidates, validates structured JSON with Zod, rejects invented candidate IDs and records the action. AI never calculates totals or approves a mapping. Live Gemini calls have not been tested because no Gemini credential was supplied.
+The adapter calls the configured model only when a reviewer starts an investigation. It sends a bounded source sample and existing candidates, validates structured JSON with Zod, rejects invented candidate IDs and records the action. AI never calculates totals or approves a mapping. Vertex AI authentication and structured responses have been verified with a synthetic connection test and, with user authorization, a bounded sample from the supplied administration-fee mapping gap. The returned candidate passed schema and catalog validation; the test did not approve or persist mapping changes.
 
 Daytona is not used: local processing already handles this dataset. No supplied credential is stored in this project.
 
@@ -113,7 +116,7 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Optionally set `CHROMIUM_PATH` to an existing Chromium executable. The browser check creates a demo case and saves screenshots plus a draft workbook in `artifacts/`. Demo review notes are explicitly labelled as test decisions.
+Optionally set `CHROMIUM_PATH` to an existing Chromium executable. The browser check creates a scoped Westvale case and verifies requests, both approvals, the verified download, persistence and mobile layout. Screenshots and exported workbooks are saved in `artifacts/`. Test reviewer notes are explicitly labelled. Set `TEST_LIVE_GEMINI=true` to exercise a live, bounded source-evidence investigation as part of that test.
 
 ## Implementation references
 

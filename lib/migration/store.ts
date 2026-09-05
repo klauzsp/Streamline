@@ -49,6 +49,7 @@ export async function createCase(
   } else await demoDataset();
   const m: Migration = {
     ...input,
+    scope: data?.scope,
     id,
     createdAt: at,
     revision: 0,
@@ -60,9 +61,11 @@ export async function createCase(
         id: randomUUID(),
         at,
         action: "Migration created",
-        detail: data
-          ? "Uploaded source GL inspected and mapped against supplied reference crosswalks."
-          : "Demo source inspected; mappings derived from reference crosswalks. All source entities retained.",
+        detail: data?.scope
+          ? data.scope.description
+          : data
+            ? "Uploaded source GL inspected and mapped against supplied reference crosswalks."
+            : "Demo source inspected; mappings derived from reference crosswalks. All source entities retained.",
         reviewer: "System",
       },
     ],

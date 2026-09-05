@@ -86,7 +86,10 @@ export function exportWorkbook(
       Name: migration.name,
       Status: verified ? "VERIFIED" : "DRAFT — NOT FOR IMPORT",
       Scope:
+        data.scope?.description ||
         "All source rows; blocked rows excluded only from loader and listed in Source References",
+      OriginalWorkbookRows: data.scope?.originalRecords || data.records.length,
+      OutsideDemoScope: data.scope?.excludedRecords || 0,
       SourceRows: data.records.length,
       LoaderRows: result.targets.length,
       BlockedRows: result.blocked.length,

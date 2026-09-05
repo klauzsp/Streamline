@@ -122,7 +122,16 @@ export type WorkbookInfo = {
   role: string;
   sheets: { name: string; rows: number; columns: string[] }[];
 };
+export type DemoScope = {
+  kind: "guided-demo";
+  entity: string;
+  originalRecords: number;
+  includedRecords: number;
+  excludedRecords: number;
+  description: string;
+};
 export type Dataset = {
+  scope?: DemoScope;
   records: SourceRecord[];
   mappings: Mapping[];
   catalog: Record<MappingKind, Candidate[]>;
@@ -132,6 +141,7 @@ export type Dataset = {
   allocationRule: string;
 };
 export type Migration = {
+  scope?: DemoScope;
   id: string;
   name: string;
   sourceAdmin: string;

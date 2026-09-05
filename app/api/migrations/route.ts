@@ -6,6 +6,7 @@ import { buildDataset, localDir } from "@/lib/migration/dataset";
 import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { guidedDemoDataset } from "@/lib/migration/guided-demo";
 export const runtime = "nodejs";
 export async function GET() {
   try {
@@ -54,6 +55,8 @@ export async function POST(req: NextRequest) {
       temporary = path.join(localDir, randomUUID() + ".xlsx");
       await writeFile(temporary, Buffer.from(await file.arrayBuffer()));
       data = await buildDataset(temporary, path.basename(file.name));
+    } else if (form.get("demo") === "guided") {
+      data = await guidedDemoDataset();
     } else if (form.get("demo") !== "true")
       throw Error("Choose a source workbook or Load Demo Migration.");
     return NextResponse.json(await createCase(values, data), { status: 201 });

@@ -1,8 +1,11 @@
 import { Dataset, Migration, Result } from "@/types";
 import { aiConfigured } from "@/lib/vertex";
+import { guidance } from "./guidance";
 export function caseView(m: Migration, data: Dataset, result: Result) {
   return {
     migration: m,
+    scope: data.scope,
+    guidance: guidance(data, m, result),
     stats: result.stats,
     verified: result.verified,
     aiConfigured: aiConfigured(),

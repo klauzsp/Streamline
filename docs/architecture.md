@@ -31,3 +31,11 @@ Many source rows use the anonymised position label `Clanford` with no source pos
 Baseline: 6,078 eligible records, 139 mapping decisions, 150 exceptions, 492 passed checks out of 2,068. A reviewer approval of the USD operations deal-only proposal raises eligible rows to 21,548. No source rows are removed.
 
 Reconciliation and exception sheets include up to 100 representative source IDs per group to stay within Excel cell limits; Source References includes every record. Transformation Audit stores compact field provenance; mapping sheets retain full reference workbook/sheet/row evidence.
+
+## Guided onboarding demo
+
+The default UI now presents a three-stage handover: understand, decide, check/download. The detailed workspace remains at `/advanced`. `lib/migration/guided-demo.ts` selects **all** rows for Kestrel Westvale Co-Invest LP (528 rows), retaining original IDs, row numbers and complete batches. It narrows mapping usage to those rows without approving any mapping. Scope metadata travels with the persisted dataset/case and is included in exports.
+
+The two actual mapping decisions hold 396 records initially. The operations-deal approval releases 352, leaving 44 in an incomplete batch. The administration-fee classification affects 11 source records and releases that 44-row batch. After both explicit approvals, all 528 rows are eligible and 28 reconciliation checks pass. Impact previews run the same engine on an unpersisted proposed decision.
+
+The guided UI presents mapping decisions rather than double-counting their dependent batch exceptions. Full underlying exceptions remain available. Request-information actions save an audit event and download a draft text request with source references; they send no messages, invent no missing values, and cannot release records.

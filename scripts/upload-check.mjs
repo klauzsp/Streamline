@@ -22,7 +22,7 @@ const browser = await chromium.launch({
     : {}),
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-await page.goto("http://127.0.0.1:3000");
+await page.goto("http://127.0.0.1:3000/advanced");
 await page.getByRole("button", { name: "New migration", exact: true }).click();
 await page
   .getByLabel("Client / fund name")

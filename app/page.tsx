@@ -1,4 +1,4 @@
-import Workspace from "./workspace";
+import GuidedWorkspace from "./guided-workspace";
 export default function Page() {
-  return <Workspace />;
+  return <GuidedWorkspace />;
 }

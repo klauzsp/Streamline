@@ -8,8 +8,9 @@
     "start": "next start",
     "test": "node --import tsx --test tests/*.test.ts",
     "preprocess": "node --import tsx scripts/preprocess.ts",
-    "test:browser": "node scripts/browser-check.mjs",
-    "format": "prettier --write app lib types tests scripts/*.ts scripts/*.mjs"
+    "test:browser": "node scripts/guided-browser-check.mjs",
+    "format": "prettier --write app lib types tests scripts/*.ts scripts/*.mjs",
+    "test:browser:advanced": "node scripts/browser-check.mjs"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",

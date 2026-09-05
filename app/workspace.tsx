@@ -138,6 +138,8 @@ export default function Workspace() {
   );
   useEffect(() => {
     refreshCases().catch((e) => setError(e.message));
+    const id = new URLSearchParams(window.location.search).get("case");
+    if (id) openCase(id);
   }, [refreshCases]);
   const openCase = async (id: string) => {
     setBusy("Opening migration");
@@ -490,7 +492,9 @@ export default function Workspace() {
             >
               <PanelLeft size={18} />
             </button>
-            <span>Workspace</span>
+            <a href={view ? `/?case=${view.migration.id}` : "/"}>
+              Guided onboarding
+            </a>
             <ChevronRight size={13} />
             <button
               onClick={() => {
@@ -742,8 +746,9 @@ export default function Workspace() {
                   <ArrowRight size={13} />
                   {view.migration.targetSystem}
                   <span>•</span>As of {view.migration.date}
-                  <span>•</span>All source entities<span>•</span>Multiple
-                  currencies
+                  <span>•</span>
+                  {view.scope ? "Westvale demo scope" : "All source entities"}
+                  <span>•</span>Multiple currencies
                 </p>
               </div>
               <div className="pipeline">
