@@ -1,4 +1,5 @@
 "use client";
+import { attachWorkbook } from "@/lib/excel/upload";
 import BrandMark from "./brand-mark";
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -195,7 +196,7 @@ export default function Workspace() {
     setError("");
     try {
       const form = new FormData(event.currentTarget);
-      if (file) form.set("file", file);
+      if (file) await attachWorkbook(form, file);
       const m = await jsonFetch("/api/migrations", {
         method: "POST",
         body: form,

@@ -1,5 +1,6 @@
 "use client";
 import BrandMark from "./brand-mark";
+import { attachWorkbook } from "@/lib/excel/upload";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -186,7 +187,7 @@ export default function GuidedWorkspace() {
     setError("");
     try {
       const form = new FormData(e.currentTarget);
-      form.set("file", file);
+      await attachWorkbook(form, file);
       const m = await json("/api/migrations", { method: "POST", body: form });
       setCreate(false);
       await open(m.id);
@@ -1143,7 +1144,7 @@ export default function GuidedWorkspace() {
                     }
                   >
                     <Download size={14} />
-                    Download detailed audit package (12 tabs)
+                    Download detailed audit package (13 tabs)
                   </button>
                   <a href={`/advanced?case=${view.migration.id}`}>
                     Inspect the detailed reconciliation

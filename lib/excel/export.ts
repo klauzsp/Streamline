@@ -24,6 +24,23 @@ export function exportWorkbook(
     if (sheet["!ref"]) sheet["!autofilter"] = { ref: sheet["!ref"] };
     XLSX.utils.book_append_sheet(wb, sheet, name);
   };
+  const sourceRef = data.records[0]?.ref;
+  const sourceHeaders =
+    data.files
+      .find((file) => file.name === sourceRef?.file)
+      ?.sheets.find((sheet) => sheet.name === sourceRef?.sheet)?.columns ||
+    Array.from(
+      { length: data.records[0]?.raw.length || 0 },
+      (_, i) => `Source column ${i + 1}`,
+    );
+  // Arrays preserve duplicate source column names and exact original strings.
+  const original = XLSX.utils.aoa_to_sheet([
+    sourceHeaders,
+    ...data.records.map((record) => record.raw),
+  ]);
+  original["!cols"] = sourceHeaders.map(() => ({ wch: 24 }));
+  if (original["!ref"]) original["!autofilter"] = { ref: original["!ref"] };
+  XLSX.utils.book_append_sheet(wb, original, "Original Data");
   add(
     "Upload Template",
     result.targets.map((t) => t.fields),
@@ -123,6 +140,8 @@ export function exportWorkbook(
       Scope:
         data.scope?.description ||
         "All source rows are in scope. Blocked rows are excluded from the loader and remain in the case for review.",
+      OriginalData:
+        "Original Data contains every in-scope source record in its original column order. Upload Template contains prepared eligible records only. Draft exports may have fewer prepared rows; compare using identifiers, not row position.",
       OriginalWorkbookRows: data.scope?.originalRecords || data.records.length,
       OutsideDemoScope: data.scope?.excludedRecords || 0,
       SourceRows: data.records.length,

@@ -7,7 +7,9 @@ import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { guidedDemoDataset } from "@/lib/migration/guided-demo";
+import { get, del } from "@vercel/blob";
 export const runtime = "nodejs";
+export const maxDuration = 120;
 export async function GET() {
   try {
     const cases = await listCases();
@@ -35,6 +37,7 @@ const schema = z.object({
 });
 export async function POST(req: NextRequest) {
   let temporary: string | undefined;
+  let uploadedPath: string | undefined;
   try {
     const form = await req.formData();
     const values = schema.parse(
@@ -46,7 +49,27 @@ export async function POST(req: NextRequest) {
     );
     const file = form.get("file");
     let data;
-    if (file instanceof File && file.size) {
+    if (process.env.VERCEL && form.get("uploadedPath")) {
+      const key = String(form.get("uploadedPath"));
+      if (!/^uploads\/[a-f0-9-]{36}\.xlsx$/.test(key))
+        throw Error("Invalid upload path");
+      const blob = await get(key, { access: "private", useCache: false });
+      if (!blob || blob.statusCode !== 200)
+        throw Error("Upload not found. Please upload again.");
+      if (blob.blob.size > 30 * 1024 * 1024)
+        throw Error("Source file exceeds the 30 MB limit.");
+      uploadedPath = key;
+      await mkdir(localDir, { recursive: true });
+      temporary = path.join(localDir, randomUUID() + ".xlsx");
+      await writeFile(
+        temporary,
+        Buffer.from(await new Response(blob.stream).arrayBuffer()),
+      );
+      data = await buildDataset(
+        temporary,
+        path.basename(String(form.get("sourceName") || "Uploaded GL.xlsx")),
+      );
+    } else if (file instanceof File && file.size) {
       if (!file.name.toLowerCase().endsWith(".xlsx"))
         throw Error("Upload an .xlsx investor-level GL workbook.");
       if (file.size > 30 * 1024 * 1024)
@@ -67,5 +90,6 @@ export async function POST(req: NextRequest) {
     );
   } finally {
     if (temporary) await unlink(temporary).catch(() => {});
+    if (uploadedPath) await del(uploadedPath).catch(() => {});
   }
 }

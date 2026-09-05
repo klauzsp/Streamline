@@ -9,7 +9,7 @@ When a fund changes administrators, its historical records arrive with the old s
 1. **Load the records.** Use the supplied demo or upload a supported accounting workbook.
 2. **Review decisions.** Inspect the original fields and proposed destination. Approve a match or request clarification.
 3. **Check the numbers.** Code compares original and prepared amounts, including debit/credit totals and record coverage.
-4. **Export.** Download the prepared Excel file with reconciliation checks and a migration summary. A detailed audit package includes mappings, decisions and source references.
+4. **Export.** Compare the Original Data tab (old format) with Upload Template (prepared format), alongside reconciliation checks and a migration summary. A detailed audit package includes mappings, decisions and source references.
 
 Unresolved decisions and failed checks block verified export. Original source files are retained.
 
@@ -30,7 +30,7 @@ The demo uses one complete fund from the supplied anonymised dataset. The destin
 
 ## Run locally
 
-Requires Node.js 22+ and Python 3.
+Requires Node.js 22+. Spreadsheet parsing preserves the original decimal text.
 
 ```bash
 npm install
@@ -50,6 +50,12 @@ npm start        # Serve the production build
 
 ## MVP scope
 
-Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. This is a local, single-user hackathon application. Uploads support the supplied accounting layout, not arbitrary spreadsheets. Live imports and destination-system record creation are outside its scope.
+Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. This is a single-user hackathon application without user accounts. Uploads support the supplied accounting layout, not arbitrary spreadsheets. Live imports and destination-system record creation are outside its scope.
+
+## Vercel
+
+On Vercel, cases and datasets use a connected private Blob store; local development continues to use `.local`. Browser uploads go directly to private storage to support files up to 30 MB. Conditional writes prevent one review from overwriting a newer saved decision.
+
+Connect a private Vercel Blob store for `BLOB_READ_WRITE_TOKEN`, then run `npx vercel --prod`. The supplied workbooks are bundled; local credentials and saved cases are excluded. Vertex AI needs a separate Google cloud authentication setup on Vercel: your Mac’s ADC login is not deployed. Until configured, investigation uses reference-based fallback.
 
 See [the dataset README](data/README.md) and [architecture notes](docs/architecture.md) for details.

@@ -1,0 +1,7 @@
+.local
+artifacts
+.env*
+.git
+.next
+node_modules
+*.tsbuildinfo

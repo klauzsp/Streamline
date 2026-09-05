@@ -217,7 +217,7 @@ test("workbook roundtrip contains regenerated loader, draft label, exact amounts
   const wb = XLSX.read(exportWorkbook(data, m, result, false, true), {
     type: "buffer",
   });
-  assert.equal(wb.SheetNames.length, 12);
+  assert.equal(wb.SheetNames.length, 13);
   const rows = XLSX.utils.sheet_to_json<Record<string, string>>(
     wb.Sheets["Upload Template"],
   );
@@ -264,7 +264,7 @@ test("unsupported source layout and malformed AI output are rejected", () => {
   );
 });
 
-test("default export has only three core sheets and preserves the exact loader", () => {
+test("default export has four core sheets and preserves the exact loader", () => {
   const data = fixture(["0.0000000000009094947017729282"]);
   const m = migration();
   const result = runMigration(data, m);
@@ -275,11 +275,22 @@ test("default export has only three core sheets and preserves the exact loader",
     type: "buffer",
   });
   assert.deepEqual(core.SheetNames, [
+    "Original Data",
     "Upload Template",
     "Reconciliation",
     "Migration Summary",
   ]);
-  assert.equal(audit.SheetNames.length, 12);
+  assert.equal(audit.SheetNames.length, 13);
+  assert.deepEqual(
+    XLSX.utils
+      .sheet_to_json(core.Sheets["Original Data"], {
+        header: 1,
+        defval: "",
+        blankrows: true,
+      })
+      .slice(1),
+    data.records.map((record) => record.raw),
+  );
   assert.deepEqual(
     XLSX.utils.sheet_to_json(core.Sheets["Upload Template"]),
     XLSX.utils.sheet_to_json(audit.Sheets["Upload Template"]),

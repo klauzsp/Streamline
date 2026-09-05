@@ -1,9 +1,12 @@
 import path from "node:path";
+import { tmpdir } from "node:os";
 import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { readWorkbook, Workbook } from "@/lib/excel/read";
 import { buildMappings, id } from "@/lib/mappings/build";
 import { Dataset, SourceRecord, WorkbookInfo } from "@/types";
-export const localDir = path.join(process.cwd(), ".local");
+export const localDir = process.env.VERCEL
+  ? path.join(tmpdir(), "streamline")
+  : path.join(process.cwd(), ".local");
 const referenceSheets = [
   "LE Mapping",
   "Investor Mapping",

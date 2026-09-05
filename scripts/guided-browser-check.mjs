@@ -11,7 +11,7 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
-await page.goto("http://127.0.0.1:3000", { waitUntil: "networkidle" });
+await page.goto(process.env.BASE_URL || "http://127.0.0.1:3000", { waitUntil: "networkidle" });
 await page.screenshot({ path: "artifacts/guided-home.png", fullPage: true });
 await page.getByRole("button", { name: "Try the 3-minute demo" }).click();
 await page

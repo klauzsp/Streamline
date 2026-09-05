@@ -6,3 +6,4 @@ node_modules/
 *.tsbuildinfo
 artifacts/
 __pycache__/
+.vercel

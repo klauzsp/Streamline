@@ -12,6 +12,7 @@ import { caseView } from "@/lib/migration/view";
 import { investigate } from "@/lib/agents/investigate";
 import { exportWorkbook } from "@/lib/excel/export";
 export const runtime = "nodejs";
+export const maxDuration = 120;
 type Context = { params: Promise<{ id: string }> };
 export async function GET(req: NextRequest, ctx: Context) {
   try {
@@ -141,8 +142,8 @@ export async function POST(req: NextRequest, ctx: Context) {
       }
       if (input.action === "export")
         detail += input.detailed
-          ? " Full audit workbook (12 sheets)."
-          : " Core workbook (3 sheets).";
+          ? " Full audit workbook (13 sheets)."
+          : " Core workbook (4 sheets).";
       m.revision++;
       m.audit.push({
         id: randomUUID(),
