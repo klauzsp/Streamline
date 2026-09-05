@@ -563,14 +563,12 @@ export default function GuidedWorkspace() {
                   </div>
                   <div className="gd-intake-summary">
                     <div className="gd-file-heading">
-                      <FileSpreadsheet size={23} />
                       <div>
                         <strong>
                           {view.scope
                             ? "Westvale · Q2 2026"
                             : view.migration.name}
                         </strong>
-                        <span>Historical fund records</span>
                       </div>
                     </div>
                     <div className="gd-intake-count">
@@ -1109,59 +1107,7 @@ export default function GuidedWorkspace() {
                     </div>
                   )}
                 </section>
-                <div className="gd-package-info">
-                  <div>
-                    <span className="gd-mini-label">
-                      WHAT YOU HAND TO YOUR IMPORT TEAM
-                    </span>
-                    <h3>The loader and the proof behind it.</h3>
-                    <p>
-                      Three tabs: Upload Template, Reconciliation and Migration
-                      Summary. Full mapping and source evidence remain available
-                      in the optional detailed audit package.
-                    </p>
-                  </div>
-                  <div>
-                    <span className="gd-mini-label">WHAT HAPPENS NEXT</span>
-                    <h3>Review, then import into Corvus.</h3>
-                    <p>
-                      Your team reviews the package and validates the target
-                      system’s import requirements. This demo prepares the
-                      handover; it does not connect to or upload into Corvus.
-                    </p>
-                  </div>
-                </div>
-                <details className="gd-quiet-details">
-                  <summary>See one amount check and the approval trail</summary>
-                  {view.reconciliation.slice(0, 1).map((check) => (
-                    <div key={check.id}>
-                      <h3>
-                        {check.account} · {check.currency}
-                      </h3>
-                      <p>
-                        Original: {check.source} → Prepared: {check.target}
-                      </p>
-                      <p>
-                        Difference: {check.difference} · {check.included} of{" "}
-                        {check.rows} records included · {check.status}
-                      </p>
-                      <p>
-                        This checks preservation during conversion, not whether
-                        the original accounting was correct.
-                      </p>
-                    </div>
-                  ))}
-                  <ul>
-                    {view.migration.decisions
-                      .filter((d) => d.action === "approve")
-                      .map((d, i) => (
-                        <li key={i}>
-                          {d.reviewer}: {d.note}
-                        </li>
-                      ))}
-                  </ul>
-                </details>
-                <ScopeNote view={view} />
+
                 <details className="gd-quiet-details">
                   <summary>
                     Supporting checks & optional downloads
