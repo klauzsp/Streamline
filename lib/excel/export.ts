@@ -5,6 +5,7 @@ export function exportWorkbook(
   migration: Migration,
   result: Result,
   verified: boolean,
+  detailed = false,
 ) {
   if (verified && !result.verified)
     throw Error(
@@ -28,66 +29,100 @@ export function exportWorkbook(
     result.targets.map((t) => t.fields),
     data.headers,
   );
-  for (const kind of [
-    "Legal entity",
-    "Investor",
-    "Deal / position",
-    "Chart of accounts",
-  ] as const)
+  // Keep Excel's numeric date values while displaying human-readable dates.
+  const upload = wb.Sheets["Upload Template"];
+  for (const header of ["GL Date", "Effective Date"]) {
+    const column = data.headers.indexOf(header);
+    if (column < 0) continue;
+    for (let row = 1; row <= result.targets.length; row++) {
+      const cell = upload[XLSX.utils.encode_cell({ r: row, c: column })];
+      if (!cell || cell.v === "" || cell.v == null) continue;
+      const serial = Number(cell.v);
+      if (!Number.isFinite(serial)) continue;
+      cell.t = "n";
+      cell.v = serial;
+      cell.z = "dd mmm yyyy";
+      delete cell.w;
+    }
+  }
+  if (detailed) {
+    for (const kind of [
+      "Legal entity",
+      "Investor",
+      "Deal / position",
+      "Chart of accounts",
+    ] as const)
+      add(
+        kind === "Deal / position"
+          ? "Deal Mapping"
+          : kind === "Chart of accounts"
+            ? "CoA Mapping"
+            : kind + " Mapping",
+        result.mappings
+          .filter((m) => m.kind === kind)
+          .map((m) => ({
+            ID: m.id,
+            Source: m.source,
+            Detail: m.detail,
+            Target: m.target?.label || "",
+            State: m.status,
+            Explanation: m.explanation,
+            Warning: m.warning || "",
+            Evidence: JSON.stringify(m.target?.evidence || m.evidence),
+          })),
+      );
     add(
-      kind === "Deal / position"
-        ? "Deal Mapping"
-        : kind === "Chart of accounts"
-          ? "CoA Mapping"
-          : kind + " Mapping",
+      "Mapping Gaps",
       result.mappings
-        .filter((m) => m.kind === kind)
+        .filter((m) => !["Exact", "Approved"].includes(m.status))
         .map((m) => ({
-          ID: m.id,
           Source: m.source,
           Detail: m.detail,
-          Target: m.target?.label || "",
-          State: m.status,
+          Status: m.status,
+          Rows: m.rowIds.length,
           Explanation: m.explanation,
-          Warning: m.warning || "",
-          Evidence: JSON.stringify(m.target?.evidence || m.evidence),
         })),
     );
-  add(
-    "Mapping Gaps",
-    result.mappings
-      .filter((m) => !["Exact", "Approved"].includes(m.status))
-      .map((m) => ({
-        Source: m.source,
-        Detail: m.detail,
-        Status: m.status,
-        Rows: m.rowIds.length,
-        Explanation: m.explanation,
-      })),
-  );
+  }
   add(
     "Reconciliation",
-    result.reconciliation.map(({ rowIds, ...r }) => ({
-      ...r,
-      SourceRows: rowIds.slice(0, 100).join(", "),
-    })),
+    result.reconciliation.map(({ rowIds, ...r }) =>
+      detailed
+        ? {
+            ...r,
+            SourceRows: rowIds.slice(0, 100).join(", "),
+          }
+        : {
+            Entity: r.entity,
+            Account: r.account,
+            Currency: r.currency,
+            Basis: r.basis,
+            "Original amount": r.source,
+            "Prepared amount": r.target,
+            Difference: r.difference,
+            "Original records": r.rows,
+            "Prepared records": r.included,
+            Status: r.status,
+          },
+    ),
   );
-  add(
-    "Exceptions",
-    result.exceptions.map(({ rowIds, totals, ...e }) => ({
-      ...e,
-      Rows: rowIds.length,
-      Totals: JSON.stringify(totals),
-      SourceRows: rowIds.slice(0, 100).join(", "),
-    })),
-  );
+  if (detailed)
+    add(
+      "Exceptions",
+      result.exceptions.map(({ rowIds, totals, ...e }) => ({
+        ...e,
+        Rows: rowIds.length,
+        Totals: JSON.stringify(totals),
+        SourceRows: rowIds.slice(0, 100).join(", "),
+      })),
+    );
   add("Migration Summary", [
     {
       Name: migration.name,
       Status: verified ? "VERIFIED" : "DRAFT — NOT FOR IMPORT",
       Scope:
         data.scope?.description ||
-        "All source rows; blocked rows excluded only from loader and listed in Source References",
+        "All source rows are in scope. Blocked rows are excluded from the loader and remain in the case for review.",
       OriginalWorkbookRows: data.scope?.originalRecords || data.records.length,
       OutsideDemoScope: data.scope?.excludedRecords || 0,
       SourceRows: data.records.length,
@@ -97,61 +132,66 @@ export function exportWorkbook(
       ChecksFailed: result.stats.failed,
       Revision: migration.revision,
       GeneratedAt: new Date().toISOString(),
+      AuditEvidence: detailed
+        ? "Full mapping and source-reference sheets included"
+        : "Full audit evidence retained in the application; available in the optional detailed audit package",
       AmountPolicy:
         "Exact decimal text cells; no rounding. Target sample allocation rule applied. Validate numeric import policy before live integration.",
     },
   ]);
-  add("Audit Log", migration.audit);
-  const ts = new Map(
-    result.targets.map((t, i) => [t.sourceId, { t, row: i + 2 }]),
-  );
-  const checks = new Map<string, string[]>();
-  for (const c of result.reconciliation)
-    for (const rid of c.rowIds) {
-      const a = checks.get(rid) || [];
-      a.push(c.id);
-      checks.set(rid, a);
-    }
-  add(
-    "Source References",
-    data.records.map((r) => ({
-      ID: r.id,
-      File: r.ref.file,
-      Sheet: r.ref.sheet,
-      Row: r.ref.row,
-      LocalAmount: r.local,
-      EntityAmount: r.amount,
-      Quantity: r.quantity,
-      Currency: r.currency,
-      EntityCurrency: r.entityCurrency,
-      Status: ts.has(r.id) ? "Included" : "Blocked",
-      UploadRow: ts.get(r.id)?.row || "",
-      MappingIDs: ts.get(r.id)?.t.mappingIds.join(", ") || "",
-      BatchRule: ts.get(r.id)?.t.batchRule || "",
-      Checks: checks.get(r.id)?.join(", "),
-    })),
-  );
-  // One row per source transaction plus full field provenance in compact JSON text.
-  add(
-    "Transformation Audit",
-    result.targets.map((t) => ({
-      SourceID: t.sourceId,
-      Provenance: JSON.stringify(
-        Object.fromEntries(
-          Object.entries(t.provenance).map(([field, p]) => [
-            field,
-            {
-              value: p.value,
-              sourceColumn: p.sources[0]?.column,
-              templateEvidence: !p.mappingId ? p.sources.slice(1) : undefined,
-              mappingId: p.mappingId,
-              rule: p.rule,
-            },
-          ]),
+  if (detailed) {
+    add("Audit Log", migration.audit);
+    const ts = new Map(
+      result.targets.map((t, i) => [t.sourceId, { t, row: i + 2 }]),
+    );
+    const checks = new Map<string, string[]>();
+    for (const c of result.reconciliation)
+      for (const rid of c.rowIds) {
+        const a = checks.get(rid) || [];
+        a.push(c.id);
+        checks.set(rid, a);
+      }
+    add(
+      "Source References",
+      data.records.map((r) => ({
+        ID: r.id,
+        File: r.ref.file,
+        Sheet: r.ref.sheet,
+        Row: r.ref.row,
+        LocalAmount: r.local,
+        EntityAmount: r.amount,
+        Quantity: r.quantity,
+        Currency: r.currency,
+        EntityCurrency: r.entityCurrency,
+        Status: ts.has(r.id) ? "Included" : "Blocked",
+        UploadRow: ts.get(r.id)?.row || "",
+        MappingIDs: ts.get(r.id)?.t.mappingIds.join(", ") || "",
+        BatchRule: ts.get(r.id)?.t.batchRule || "",
+        Checks: checks.get(r.id)?.join(", "),
+      })),
+    );
+    // One row per source transaction plus full field provenance in compact JSON text.
+    add(
+      "Transformation Audit",
+      result.targets.map((t) => ({
+        SourceID: t.sourceId,
+        Provenance: JSON.stringify(
+          Object.fromEntries(
+            Object.entries(t.provenance).map(([field, p]) => [
+              field,
+              {
+                value: p.value,
+                sourceColumn: p.sources[0]?.column,
+                templateEvidence: !p.mappingId ? p.sources.slice(1) : undefined,
+                mappingId: p.mappingId,
+                rule: p.rule,
+              },
+            ]),
+          ),
         ),
-      ),
-    })),
-  );
+      })),
+    );
+  }
   return XLSX.write(wb, {
     bookType: "xlsx",
     type: "buffer",

@@ -1,4 +1,4 @@
-# Handover
+# Streamline
 
 A fund administration migration MVP built around the supplied Kestrel workbooks.
 
@@ -29,7 +29,7 @@ Requires Node.js 22+ and Python 3 with the standard library. No Python packages,
 - Batch override using the lowest numeric priority from Batch Preference; incomplete transaction mappings hold their batch.
 - Both local and entity-currency reconciliation, separated by entity, mapped account and currency. Checks cover net movements, gross debits/credits and row completeness.
 - Source evidence drawers, per-field provenance, persistent decision history and audit events.
-- A regenerated 12-sheet XLSX package, with verified export blocked until every source row is eligible and every check passes. Draft review packages remain available.
+- A regenerated three-tab XLSX package (Upload Template, Reconciliation and Migration Summary), with an optional 12-tab detailed audit download, with verified export blocked until every source row is eligible and every check passes. Draft review packages remain available.
 
 The reference **Upload Template is never used to generate loader records**. Source files are not modified.
 
@@ -72,7 +72,7 @@ GEMINI_MODEL=gemini-2.5-flash
 
 Alternatively, Vertex Express mode accepts `AI_PROVIDER=vertex` plus its own `GEMINI_API_KEY`, without a project. An AI Studio key and a Vertex key are different provider configurations. The model name is configurable.
 
-The adapter calls the configured model only when a reviewer starts an investigation. It sends a bounded source sample and existing candidates, validates structured JSON with Zod, rejects invented candidate IDs and records the action. AI never calculates totals or approves a mapping. Vertex AI authentication and structured responses have been verified with a synthetic connection test and, with user authorization, a bounded sample from the supplied administration-fee mapping gap. The returned candidate passed schema and catalog validation; the test did not approve or persist mapping changes.
+The adapter runs a bounded two-stage investigation only when a reviewer starts one: Gemini selects evidence tools, code retrieves source rows and allowed candidates (plus mapping references when requested), and Gemini returns a recommendation or abstains. The UI shows the executed retrieval steps. Responses are validated with Zod; invented candidate IDs are rejected. Source and candidate checks always run before the conclusion. AI never calculates totals or approves a mapping. Vertex AI authentication and structured responses have been verified with a synthetic connection test and, with user authorization, a bounded sample from the supplied administration-fee mapping gap. The returned candidate passed schema and catalog validation; the test did not approve or persist mapping changes.
 
 Daytona is not used: local processing already handles this dataset. No supplied credential is stored in this project.
 
@@ -123,3 +123,5 @@ Optionally set `CHROMIUM_PATH` to an existing Chromium executable. The browser c
 - [Google: structured JSON generation](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-gemini-controlled-generation-response-schema-2)
 - [Google: express-mode REST endpoints](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/express-mode/api-reference)
 - [SheetJS: official current package distribution](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/)
+
+The guided demo now shows the configured destination alongside the incoming records, one source-entry comparison with the selected destination, and an expandable completion check and approval trail. Alternative selections update the proposal and reviewer record; an empty AI recommendation clears the selection and confirmation.

@@ -34,7 +34,12 @@ const requestDownload = page.waitForEvent("download");
 await page.getByRole("button", { name: "Save & download request" }).click();
 await (await requestDownload).saveAs("artifacts/guided-clarification.txt");
 await page.locator(".gd-busy").waitFor({ state: "hidden", timeout: 60000 });
-let result = await (await page.request.get("http://127.0.0.1:3000/api/migrations/" + caseId)).json();
+let result = await page.evaluate(async (id) => {
+  const response = await fetch("/api/migrations/" + id);
+  if (!response.ok)
+    throw new Error("Persistence request failed: " + response.status);
+  return response.json();
+}, caseId);
 if (result.stats.eligible !== 132 || result.verified)
   throw Error("Request incorrectly released records");
 await page
@@ -118,7 +123,14 @@ if (
   throw Error("Mobile page overflows horizontally");
 await page.reload();
 await page.getByRole("heading", { name: "Westvale’s handover" }).waitFor();
-result = await (await page.request.get("http://127.0.0.1:3000/api/migrations/" + caseId)).json();
+result = await page.evaluate(async (id) => {
+  const response = await fetch("/api/migrations/" + id);
+  if (!response.ok)
+    throw new Error("Persistence request failed: " + response.status);
+  return response.json();
+}, caseId);
+if (process.env.TEST_LIVE_GEMINI === "true" && !Object.values(result.migration.suggestions).some((s) => s.provider.startsWith("Gemini") && s.trace?.length >= 2))
+  throw Error("Two-stage live investigation was not recorded");
 if (!result.verified || result.guidance.remaining !== 0)
   throw Error("Approvals did not persist");
 if (errors.length) throw Error(errors.join("\n"));

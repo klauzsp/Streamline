@@ -78,7 +78,7 @@ test("guided demo retains one complete real fund and verifies after two explicit
   assert.equal(result.stats.eligible, 528);
   assert.equal(result.stats.passed, 28);
   assert.equal(result.exceptions.length, 0);
-  const wb = XLSX.read(exportWorkbook(data, m, result, true), {
+  const wb = XLSX.read(exportWorkbook(data, m, result, true, true), {
     type: "buffer",
   });
   const summary = XLSX.utils.sheet_to_json<Record<string, unknown>>(

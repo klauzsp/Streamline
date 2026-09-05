@@ -214,7 +214,7 @@ test("workbook roundtrip contains regenerated loader, draft label, exact amounts
   const data = fixture(["0.0000000000009094947017729282"]);
   const m = migration();
   const result = runMigration(data, m);
-  const wb = XLSX.read(exportWorkbook(data, m, result, false), {
+  const wb = XLSX.read(exportWorkbook(data, m, result, false, true), {
     type: "buffer",
   });
   assert.equal(wb.SheetNames.length, 12);
@@ -261,5 +261,33 @@ test("unsupported source layout and malformed AI output are rejected", () => {
       confidence: 0.3,
       approve: true,
     }),
+  );
+});
+
+test("default export has only three core sheets and preserves the exact loader", () => {
+  const data = fixture(["0.0000000000009094947017729282"]);
+  const m = migration();
+  const result = runMigration(data, m);
+  const core = XLSX.read(exportWorkbook(data, m, result, true), {
+    type: "buffer",
+  });
+  const audit = XLSX.read(exportWorkbook(data, m, result, true, true), {
+    type: "buffer",
+  });
+  assert.deepEqual(core.SheetNames, [
+    "Upload Template",
+    "Reconciliation",
+    "Migration Summary",
+  ]);
+  assert.equal(audit.SheetNames.length, 12);
+  assert.deepEqual(
+    XLSX.utils.sheet_to_json(core.Sheets["Upload Template"]),
+    XLSX.utils.sheet_to_json(audit.Sheets["Upload Template"]),
+  );
+  assert.equal(
+    XLSX.utils.sheet_to_json<Record<string, string>>(
+      core.Sheets["Reconciliation"],
+    )[0].Status,
+    "PASS",
   );
 });

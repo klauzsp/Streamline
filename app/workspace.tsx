@@ -1,4 +1,5 @@
 "use client";
+import BrandMark from "./brand-mark";
 import { useEffect, useState, useCallback } from "react";
 import {
   ArrowUpRight,
@@ -399,10 +400,8 @@ export default function Workspace() {
             setDetail(null);
           }}
         >
-          <span className="brand-symbol">
-            <GitBranch size={22} />
-          </span>
-          handover<span className="brand-dot">.</span>
+          <BrandMark />
+          streamline<span className="brand-dot">.</span>
         </button>
         <div className="workspace-label">WORKSPACE</div>
         <button
@@ -1561,7 +1560,9 @@ export default function Workspace() {
                         <button
                           className="primary"
                           disabled={!view.verified || !!busy}
-                          onClick={() => action("export", { verified: true })}
+                          onClick={() =>
+                            action("export", { verified: true, detailed: true })
+                          }
                         >
                           <ShieldCheck size={16} />
                           Download verified package
@@ -1569,7 +1570,12 @@ export default function Workspace() {
                         <button
                           className="secondary"
                           disabled={!!busy}
-                          onClick={() => action("export", { verified: false })}
+                          onClick={() =>
+                            action("export", {
+                              verified: false,
+                              detailed: true,
+                            })
+                          }
                         >
                           <Download size={16} />
                           Download draft review
@@ -1615,7 +1621,7 @@ export default function Workspace() {
           )}
           <footer>
             <span>
-              handover<span className="brand-dot">.</span>
+              streamline<span className="brand-dot">.</span>
               <span className="footer-divider">/</span>Fund migration workspace
             </span>
             <span>

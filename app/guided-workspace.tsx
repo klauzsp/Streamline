@@ -1,4 +1,5 @@
 "use client";
+import BrandMark from "./brand-mark";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -8,7 +9,6 @@ import {
   ChevronDown,
   FileSpreadsheet,
   FolderOpen,
-  GitBranch,
   Loader2,
   Download,
   ShieldCheck,
@@ -110,7 +110,10 @@ export default function GuidedWorkspace() {
         if (current) {
           setEvidence(e);
           setCandidate(
-            e.mapping.candidates[0]?.id || e.mapping.target?.id || "",
+            view.migration.suggestions[decision.id]?.candidates[0] ??
+              (view.migration.suggestions[decision.id]
+                ? ""
+                : e.mapping.candidates[0]?.id || e.mapping.target?.id || ""),
           );
         }
       })
@@ -230,9 +233,11 @@ export default function GuidedWorkspace() {
       if (action === "export") {
         saveDownload(
           await res.blob(),
-          extra.verified
-            ? "Westvale-verified-demo.xlsx"
-            : "handover-review-draft.xlsx",
+          extra.detailed
+            ? "handover-detailed-audit.xlsx"
+            : extra.verified
+              ? "Westvale-verified-demo.xlsx"
+              : "handover-review-draft.xlsx",
         );
         setView(await json("/api/migrations/" + view.migration.id));
         setDownloaded(true);
@@ -255,7 +260,8 @@ export default function GuidedWorkspace() {
             ),
           );
           const s = next.migration.suggestions[decision.id];
-          if (s?.candidates[0]) setCandidate(s.candidates[0]);
+          setCandidate(s?.candidates[0] || "");
+          setConfirmed(false);
         }
         if (action === "request") {
           saveDownload(
@@ -292,31 +298,23 @@ export default function GuidedWorkspace() {
         )
         .join("\n") || "See the original handover workbook.";
     setRequestText(
-      `To: ${view.migration.sourceAdmin}\nSubject: Clarification needed — ${view.migration.name}\n\nWe are preparing this client's historical records for import into ${view.migration.targetSystem}.\n\n${decision.request}\n\nAffected records: ${decision.rows}\nSource references:\n${refs}\n\nPlease reply with confirmation and supporting evidence. We will hold the affected records until this is resolved.\n`,
+      `To: ${view.migration.sourceAdmin}\nSubject: Clarification needed — ${view.migration.name}\n\nWe are preparing this client's historical records for import into ${view.migration.targetSystem}.\n\n${decision.request.split("The proposed target is")[0]}\nCurrently selected target: ${evidence?.catalog.find((c) => c.id === candidate)?.label || "None — please clarify"}.\n\nAffected records: ${decision.rows}\nSource references:\n${refs}\n\nPlease reply with confirmation and supporting evidence. We will hold the affected records until this is resolved.\n`,
     );
     setRequestOpen(true);
   }
   const suggestion = decision && view?.migration.suggestions[decision.id];
   const hasModel = !!suggestion?.provider.startsWith("Gemini");
-  const chosen =
-    evidence?.catalog.find((c) => c.id === candidate) || decision?.candidate;
+  const chosen = evidence?.catalog.find((c) => c.id === candidate);
   const exact = view?.mappings.filter((m) => m.status === "Exact").length || 0;
   return (
     <div className="guided-shell">
       <header className="gd-header">
         <button className="gd-brand" onClick={home}>
-          <span>
-            <GitBranch size={21} />
-          </span>
-          handover<span className="gd-dot">.</span>
+          <BrandMark />
+          streamline<span className="gd-dot">.</span>
         </button>
-        <span className="gd-header-label">Client onboarding, made clear</span>
-        <div className="gd-header-right">
-          <span className="gd-role">Incoming fund administrator</span>
-          <span className="gd-avatar">You</span>
-        </div>
       </header>
-      <main className="gd-main">
+      <main className={view ? "gd-main" : "gd-main gd-landing"}>
         {error && (
           <div className="gd-error" role="alert">
             <span>{error}</span>
@@ -328,18 +326,10 @@ export default function GuidedWorkspace() {
         {!view ? (
           <>
             <div className="gd-hero">
-              <div className="gd-eyebrow">
-                <span /> FROM OLD ADMINISTRATOR TO YOUR SYSTEM
-              </div>
               <h1>
                 A new client.
                 <br />A handover you can trust.
               </h1>
-              <p>
-                Your client is moving fund administrators. We turn their old
-                records into a checked import file—and bring you the decisions
-                that need your judgement.
-              </p>
               <div className="gd-hero-actions">
                 <button
                   className="gd-primary"
@@ -357,139 +347,7 @@ export default function GuidedWorkspace() {
                   <Upload size={15} />
                 </button>
               </div>
-              <span className="gd-hero-note">
-                Real source data · One complete fund · Two decisions to review
-              </span>
             </div>
-            <section
-              className="gd-story"
-              aria-label="How client onboarding works"
-            >
-              <div>
-                <span className="gd-story-icon">
-                  <FolderOpen size={23} />
-                </span>
-                <span className="gd-mini-label">01 · THE HANDOVER</span>
-                <h2>The previous admin sends files.</h2>
-                <p>
-                  Historical transactions, investor records and account names
-                  from their system.
-                </p>
-              </div>
-              <ArrowRight className="gd-story-arrow" size={20} />
-              <div>
-                <span className="gd-story-icon">
-                  <SearchCheck size={23} />
-                </span>
-                <span className="gd-mini-label">02 · YOUR REVIEW</span>
-                <h2>We match. You decide.</h2>
-                <p>
-                  Existing matches are applied. You see clear proposals for
-                  anything uncertain.
-                </p>
-              </div>
-              <ArrowRight className="gd-story-arrow" size={20} />
-              <div>
-                <span className="gd-story-icon">
-                  <ShieldCheck size={23} />
-                </span>
-                <span className="gd-mini-label">03 · READY FOR IMPORT</span>
-                <h2>A checked file for your system.</h2>
-                <p>
-                  Amounts preserved, decisions recorded and a loader ready for
-                  your import review.
-                </p>
-              </div>
-            </section>
-            <section className="gd-demo-intro">
-              <div>
-                <span className="gd-mini-label">YOUR DEMO CLIENT</span>
-                <h2>Meet Westvale.</h2>
-                <p>
-                  A fund is moving from Legacy Admin to Corvus. Its 528
-                  historical records need two mapping decisions before we can
-                  release the package.
-                </p>
-              </div>
-              <div className="gd-demo-facts">
-                <span>
-                  <strong>528</strong>real records
-                </span>
-                <span>
-                  <strong>2</strong>review decisions
-                </span>
-                <span>
-                  <strong>1</strong>verified package
-                </span>
-              </div>
-            </section>
-            {cases.filter((c) => c.migration.scope?.kind === "guided-demo")
-              .length > 0 && (
-              <section className="gd-resume">
-                <h2>Continue a handover</h2>
-                {cases
-                  .filter((c) => c.migration.scope?.kind === "guided-demo")
-                  .slice(-3)
-                  .reverse()
-                  .map((c) => (
-                    <button
-                      key={c.migration.id}
-                      onClick={() => open(c.migration.id)}
-                    >
-                      <span className="gd-resume-icon">
-                        <FileSpreadsheet size={19} />
-                      </span>
-                      <span>
-                        <strong>{c.migration.name}</strong>
-                        <small>
-                          {new Date(c.migration.createdAt).toLocaleString(
-                            "en-GB",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}{" "}
-                          ·{" "}
-                          {c.stats.gaps
-                            ? `${c.stats.gaps} decisions remaining`
-                            : "Decisions complete"}
-                        </small>
-                      </span>
-                      <ArrowRight size={17} />
-                    </button>
-                  ))}
-              </section>
-            )}
-            <details className="gd-quiet-details">
-              <summary>
-                Other migrations & the full dataset
-                <ChevronDown size={14} />
-              </summary>
-              <p>
-                The full workbook contains 33,902 records across many entities.
-                It remains available in the detailed workspace with its original
-                unresolved items.
-              </p>
-              <a href="/advanced">
-                Open detailed workspace
-                <ExternalLink size={13} />
-              </a>
-              {cases
-                .filter((c) => !c.migration.scope)
-                .slice(-5)
-                .map((c) => (
-                  <button
-                    key={c.migration.id}
-                    onClick={() => open(c.migration.id)}
-                  >
-                    {c.migration.name}
-                    <small>{number(c.stats.records)} records</small>
-                    <ArrowUpRight size={14} />
-                  </button>
-                ))}
-            </details>
           </>
         ) : (
           <>
@@ -569,6 +427,29 @@ export default function GuidedWorkspace() {
             </nav>
             {step === "understand" && (
               <>
+                <div className="gd-input-output">
+                  <div>
+                    <span className="gd-mini-label">
+                      INPUT · PREVIOUS ADMINISTRATOR
+                    </span>
+                    <h3>Client accounting workbook</h3>
+                    <p>
+                      {number(view.stats.records)} source records inspected.
+                      Original files retained.
+                    </p>
+                  </div>
+                  <ArrowRight aria-hidden="true" />
+                  <div>
+                    <span className="gd-mini-label">
+                      DESTINATION · CONFIGURED REFERENCE
+                    </span>
+                    <h3>{view.migration.targetSystem} upload template</h3>
+                    <p>
+                      Supplied template and reference mappings loaded. We
+                      prepare an Excel file; no live system connection.
+                    </p>
+                  </div>
+                </div>
                 <section className="gd-intake">
                   <div className="gd-intake-copy">
                     <span className="gd-eyebrow">
@@ -803,7 +684,7 @@ export default function GuidedWorkspace() {
                         </span>
                         <h3>
                           {chosen
-                            ? decision.recommendation
+                            ? `Use ${chosen.label}.`
                             : "No confirmed target record is available yet."}
                         </h3>
                         {chosen && (
@@ -813,6 +694,44 @@ export default function GuidedWorkspace() {
                         )}
                         <p>{decision.question}</p>
                       </div>
+                      {evidence?.rows[0] && (
+                        <div className="gd-record-example">
+                          <span className="gd-mini-label">
+                            ONE ENTRY · PROPOSED CHANGE BEFORE APPROVAL
+                          </span>
+                          <div className="gd-input-output">
+                            <div>
+                              <h3>Original record</h3>
+                              <p>{evidence.rows[0].source.account}</p>
+                              <p>{evidence.rows[0].source.transType}</p>
+                              <p>{evidence.rows[0].source.raw[18]}</p>
+                            </div>
+                            <ArrowRight aria-hidden="true" />
+                            <div>
+                              <h3>Selected destination</h3>
+                              <p>
+                                {chosen?.label || "Awaiting a reviewed match"}
+                              </p>
+                              <p>
+                                Target identifier:{" "}
+                                {chosen?.values.id ||
+                                  chosen?.values.account ||
+                                  "Not selected"}
+                              </p>
+                            </div>
+                          </div>
+                          <p>
+                            Original signed amount:{" "}
+                            {evidence.rows[0].source.currency}{" "}
+                            {evidence.rows[0].source.local}. The mapping changes
+                            classification or identity, not this amount.
+                          </p>
+                          <small>
+                            {evidence.rows[0].source.ref.sheet} · source row{" "}
+                            {evidence.rows[0].source.ref.row}
+                          </small>
+                        </div>
+                      )}
                       <div className="gd-agent">
                         <div className="gd-agent-heading">
                           <span>
@@ -830,7 +749,22 @@ export default function GuidedWorkspace() {
                           )}
                         </div>
                         {suggestion ? (
-                          <p>{suggestion.explanation}</p>
+                          <div>
+                            <p>{suggestion.explanation}</p>
+                            {suggestion.trace && (
+                              <ul>
+                                {suggestion.trace.map((line) => (
+                                  <li key={line}>{line}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {!suggestion.candidates.length && (
+                              <strong>
+                                No match recommended. Request clarification or
+                                explicitly select a target after review.
+                              </strong>
+                            )}
+                          </div>
                         ) : (
                           <p>
                             Inspect source descriptions and the reference
@@ -995,7 +929,7 @@ export default function GuidedWorkspace() {
                                     mappingId: decision.id,
                                     candidateId: candidate,
                                     note:
-                                      decision.approvalNote +
+                                      `I reviewed the evidence and confirm target ${chosen?.label} (ID: ${candidate}).` +
                                       (note.trim()
                                         ? " Reviewer note: " + note.trim()
                                         : ""),
@@ -1095,6 +1029,12 @@ export default function GuidedWorkspace() {
                       ? `All ${number(view.stats.records)} records in this ${view.scope ? "demo " : ""}package are mapped, and every amount check passes. You can now download the loader and its supporting evidence.`
                       : `${number(view.stats.blocked)} records are still held. Resolve the remaining decisions before we release a verified package.`}
                   </p>
+                  <p>
+                    <strong>
+                      {number(view.stats.eligible)} records prepared ·{" "}
+                      {number(view.stats.blocked)} blocked
+                    </strong>
+                  </p>
                   <div className="gd-check-list">
                     <CheckLine
                       pass={view.stats.eligible === view.stats.records}
@@ -1175,9 +1115,9 @@ export default function GuidedWorkspace() {
                     </span>
                     <h3>The loader and the proof behind it.</h3>
                     <p>
-                      A 12-sheet workbook containing the import rows, mappings,
-                      reconciliation and audit trail. Every loader record points
-                      back to its original source row.
+                      Three tabs: Upload Template, Reconciliation and Migration
+                      Summary. Full mapping and source evidence remain available
+                      in the optional detailed audit package.
                     </p>
                   </div>
                   <div>
@@ -1190,10 +1130,40 @@ export default function GuidedWorkspace() {
                     </p>
                   </div>
                 </div>
+                <details className="gd-quiet-details">
+                  <summary>See one amount check and the approval trail</summary>
+                  {view.reconciliation.slice(0, 1).map((check) => (
+                    <div key={check.id}>
+                      <h3>
+                        {check.account} · {check.currency}
+                      </h3>
+                      <p>
+                        Original: {check.source} → Prepared: {check.target}
+                      </p>
+                      <p>
+                        Difference: {check.difference} · {check.included} of{" "}
+                        {check.rows} records included · {check.status}
+                      </p>
+                      <p>
+                        This checks preservation during conversion, not whether
+                        the original accounting was correct.
+                      </p>
+                    </div>
+                  ))}
+                  <ul>
+                    {view.migration.decisions
+                      .filter((d) => d.action === "approve")
+                      .map((d, i) => (
+                        <li key={i}>
+                          {d.reviewer}: {d.note}
+                        </li>
+                      ))}
+                  </ul>
+                </details>
                 <ScopeNote view={view} />
                 <details className="gd-quiet-details">
                   <summary>
-                    Supporting checks & draft export
+                    Supporting checks & optional downloads
                     <ChevronDown size={14} />
                   </summary>
                   <p>
@@ -1210,6 +1180,16 @@ export default function GuidedWorkspace() {
                     <Download size={14} />
                     Download draft review package
                   </button>
+                  <button
+                    className="gd-secondary"
+                    disabled={!!busy}
+                    onClick={() =>
+                      act("export", { verified: view.verified, detailed: true })
+                    }
+                  >
+                    <Download size={14} />
+                    Download detailed audit package (12 tabs)
+                  </button>
                   <a href={`/advanced?case=${view.migration.id}`}>
                     Inspect the detailed reconciliation
                     <ExternalLink size={13} />
@@ -1219,13 +1199,17 @@ export default function GuidedWorkspace() {
             )}
           </>
         )}
-        <footer className="gd-footer">
-          <span>Human judgement. Verified numbers. A clear handover.</span>
-          <a href={view ? `/advanced?case=${view.migration.id}` : "/advanced"}>
-            Detailed workspace
-            <ExternalLink size={12} />
-          </a>
-        </footer>
+        {view && (
+          <footer className="gd-footer">
+            <span>Human judgement. Verified numbers. A clear handover.</span>
+            <a
+              href={view ? `/advanced?case=${view.migration.id}` : "/advanced"}
+            >
+              Detailed workspace
+              <ExternalLink size={12} />
+            </a>
+          </footer>
+        )}
       </main>
       {busy && (
         <div className="gd-busy" role="status">

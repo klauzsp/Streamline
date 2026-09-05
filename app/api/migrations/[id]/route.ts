@@ -76,6 +76,7 @@ const actionSchema = z
     note: z.string().trim().max(2000).optional(),
     reviewer: z.string().trim().min(1).max(100).default("Local reviewer"),
     verified: z.boolean().optional(),
+    detailed: z.boolean().optional(),
   })
   .strict();
 export async function POST(req: NextRequest, ctx: Context) {
@@ -138,6 +139,10 @@ export async function POST(req: NextRequest, ctx: Context) {
           ? "Verified migration package generated."
           : "Draft review package generated; not for import.";
       }
+      if (input.action === "export")
+        detail += input.detailed
+          ? " Full audit workbook (12 sheets)."
+          : " Core workbook (3 sheets).";
       m.revision++;
       m.audit.push({
         id: randomUUID(),
@@ -151,13 +156,19 @@ export async function POST(req: NextRequest, ctx: Context) {
             : input.reviewer,
       });
       if (input.action === "export") {
-        const buffer = exportWorkbook(data, m, result, !!input.verified);
+        const buffer = exportWorkbook(
+          data,
+          m,
+          result,
+          !!input.verified,
+          !!input.detailed,
+        );
         await saveCase(m);
         return new NextResponse(new Uint8Array(buffer), {
           headers: {
             "Content-Type":
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "Content-Disposition": `attachment; filename="${input.verified ? "verified-migration" : "draft-review"}-${caseId.slice(0, 8)}.xlsx"`,
+            "Content-Disposition": `attachment; filename="${input.detailed ? "detailed-audit" : input.verified ? "verified-migration" : "draft-review"}-${caseId.slice(0, 8)}.xlsx"`,
           },
         });
       }
