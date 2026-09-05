@@ -1,6 +1,6 @@
 "use client";
 import BrandMark from "./brand-mark";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -37,7 +37,6 @@ type Evidence = {
   rows: { source: SourceRecord; target?: TargetRecord }[];
   catalog: Candidate[];
 };
-type Summary = { migration: Migration; stats: CaseView["stats"] };
 const number = (n: number) => n.toLocaleString("en-GB");
 async function json(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
@@ -56,7 +55,7 @@ function saveDownload(blob: Blob, name: string) {
 }
 export default function GuidedWorkspace() {
   const [view, setView] = useState<CaseView | null>(null),
-    [cases, setCases] = useState<Summary[]>([]),
+    [demoIntro, setDemoIntro] = useState(false),
     [step, setStep] = useState<Step>("understand"),
     [busy, setBusy] = useState(""),
     [error, setError] = useState(""),
@@ -76,12 +75,7 @@ export default function GuidedWorkspace() {
     [create, setCreate] = useState(false),
     [file, setFile] = useState<File | null>(null),
     [message, setMessage] = useState("");
-  const refresh = useCallback(
-    async () => setCases(await json("/api/migrations")),
-    [],
-  );
   useEffect(() => {
-    refresh().catch((e) => setError(e.message));
     const id = new URLSearchParams(window.location.search).get("case");
     if (id) {
       setBusy("Opening client handover");
@@ -93,7 +87,7 @@ export default function GuidedWorkspace() {
         .catch((e) => setError(e.message))
         .finally(() => setBusy(""));
     }
-  }, [refresh]);
+  }, []);
   const decision =
     view?.guidance.decisions.find((d) => d.id === selected) ||
     view?.guidance.decisions[0];
@@ -138,6 +132,7 @@ export default function GuidedWorkspace() {
     };
   }, [create]);
   function home() {
+    setDemoIntro(false);
     setView(null);
     setStep("understand");
     setChange(null);
@@ -145,7 +140,6 @@ export default function GuidedWorkspace() {
     setMessage("");
     setDownloaded(false);
     window.history.replaceState(null, "", "/");
-    refresh().catch(() => {});
   }
   async function open(id: string) {
     setBusy("Opening client handover");
@@ -178,7 +172,6 @@ export default function GuidedWorkspace() {
       }).forEach(([k, v]) => form.set(k, v));
       const m = await json("/api/migrations", { method: "POST", body: form });
       await open(m.id);
-      await refresh();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -196,7 +189,6 @@ export default function GuidedWorkspace() {
       const m = await json("/api/migrations", { method: "POST", body: form });
       setCreate(false);
       await open(m.id);
-      await refresh();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -254,14 +246,14 @@ export default function GuidedWorkspace() {
           setNote("");
         }
         if (action === "investigate" && decision) {
+          const s = next.migration.suggestions[decision.id];
+          setCandidate(s?.candidates[0] || "");
+          setConfirmed(false);
           setEvidence(
             await json(
               `/api/migrations/${view.migration.id}?mapping=${decision.id}`,
             ),
           );
-          const s = next.migration.suggestions[decision.id];
-          setCandidate(s?.candidates[0] || "");
-          setConfirmed(false);
         }
         if (action === "request") {
           saveDownload(
@@ -280,7 +272,6 @@ export default function GuidedWorkspace() {
               : "Some records still need a decision. No verified package has been released.",
           );
       }
-      await refresh();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -323,31 +314,166 @@ export default function GuidedWorkspace() {
             </button>
           </div>
         )}
-        {!view ? (
+        {!view && demoIntro ? (
+          <section className="gd-demo-brief" aria-labelledby="demo-brief-title">
+            <button className="gd-back" onClick={home}>
+              <ArrowLeft size={14} /> Back
+            </button>
+
+            <h1 id="demo-brief-title">
+              A fund is changing administrators.
+              <br />
+              You’re taking over its records.
+            </h1>
+            <p className="gd-brief-lead">
+              Westvale is the anonymised fund in this example. You work for the
+              incoming fund administrator, which, is the team responsible for
+              keeping its accounts and reporting to its investors.
+            </p>
+            <div className="gd-brief-sections">
+              <section>
+                <h2>What has arrived</h2>
+                <p>
+                  The previous administrator has sent a quarter’s accounting
+                  records: expenses, investment movements and amounts assigned
+                  to investors. This demo includes all 528 entries for Westvale.
+                </p>
+              </section>
+              <section>
+                <h2>Why you can’t just upload it</h2>
+                <p>
+                  Your system uses different account categories and identifiers.
+                  Some records have an agreed match; others need clarification.
+                  For example, one account says “Interest Income – Bank”, while
+                  its transaction type says “Administration Fees”.
+                </p>
+              </section>
+              <section>
+                <h2>What Streamline does</h2>
+                <p>
+                  It applies the supplied reference mappings, holds uncertain
+                  records for review and checks that the prepared output
+                  preserves the amounts. Gemini helps investigate the evidence;
+                  you decide whether to approve a match or ask for more
+                  information.
+                </p>
+              </section>
+            </div>
+            <div className="gd-brief-next">
+              <p>
+                <strong>Your walkthrough</strong>
+                <br />
+                Review two decisions, inspect the checks and download the
+                prepared Excel package. Nothing is uploaded to a live accounting
+                system.
+              </p>
+              <button
+                className="gd-primary"
+                onClick={startDemo}
+                disabled={!!busy}
+              >
+                Open Westvale’s handover <ArrowRight size={16} />
+              </button>
+            </div>
+          </section>
+        ) : !view ? (
           <>
             <div className="gd-hero">
-              <h1>
-                A new client.
-                <br />A handover you can trust.
-              </h1>
-              <div className="gd-hero-actions">
-                <button
-                  className="gd-primary"
-                  onClick={startDemo}
-                  disabled={!!busy}
-                >
-                  Try the 3-minute demo
-                  <ArrowRight size={17} />
-                </button>
-                <button
-                  className="gd-secondary"
-                  onClick={() => setCreate(true)}
-                >
-                  Upload your own handover
-                  <Upload size={15} />
-                </button>
+              <div className="gd-hero-copy">
+                <h1>
+                  A new client.
+                  <br />A handover you can trust.
+                </h1>
+
+                <div className="gd-hero-actions">
+                  <button
+                    className="gd-primary"
+                    onClick={() => {
+                      setDemoIntro(true);
+                      window.scrollTo(0, 0);
+                    }}
+                    disabled={!!busy}
+                  >
+                    Try the 3-minute demo <ArrowRight size={16} />
+                  </button>
+                  <button
+                    className="gd-secondary"
+                    onClick={() => setCreate(true)}
+                  >
+                    Upload your own handover <Upload size={16} />
+                  </button>
+                </div>
               </div>
+              <figure
+                className="gd-landing-preview"
+                aria-label="How Company X’s records become a prepared import file"
+              >
+                <figcaption>
+                  <span>Company X handover</span>
+                </figcaption>
+                <div className="gd-preview-journey">
+                  <div>
+                    <FileSpreadsheet size={20} />
+                    <section>
+                      <h3>The old administrator sends a file</h3>
+                      <p>
+                        Company X’s accounting records arrive in the old
+                        system’s format.
+                      </p>
+                    </section>
+                  </div>
+                  <div>
+                    <SearchCheck size={20} />
+                    <section>
+                      <h3>Streamline prepares it for your system</h3>
+                      <p>
+                        Records are matched to your template. You review
+                        anything uncertain, and the amounts are checked.
+                      </p>
+                    </section>
+                  </div>
+                  <div>
+                    <Download size={20} />
+                    <section>
+                      <h3>You receive a checked import file</h3>
+                      <p>
+                        Download the prepared records and the history of what
+                        was changed and approved.
+                      </p>
+                    </section>
+                  </div>
+                </div>
+              </figure>
             </div>
+            <section
+              className="gd-landing-process"
+              aria-label="Checks behind the prepared file"
+            >
+              <article>
+                <h2>You control the decisions</h2>
+                <p>
+                  AI suggestions are not approvals. Uncertain records stay on
+                  hold until a reviewer confirms the match. If information is
+                  missing, you can request clarification.
+                </p>
+              </article>
+              <article>
+                <h2>The numbers must match</h2>
+                <p>
+                  Calculations compare the original and prepared amounts and
+                  check for missing records. A verified export is blocked while
+                  any required check fails.
+                </p>
+              </article>
+              <article>
+                <h2>Every change has a source</h2>
+                <p>
+                  Follow a prepared entry back to its original spreadsheet row,
+                  the mappings applied and the reviewer’s decision. The detailed
+                  audit package keeps that evidence with the output.
+                </p>
+              </article>
+            </section>
           </>
         ) : (
           <>
@@ -356,34 +482,13 @@ export default function GuidedWorkspace() {
                 <ArrowLeft size={14} />
                 Client handovers
               </button>
-              <span className="gd-scope-tag">
-                {view.scope
-                  ? "Guided demo · one complete fund"
-                  : "All uploaded records"}
-              </span>
             </div>
             <div className="gd-case-title">
               <div>
-                <span className="gd-mini-label">
-                  {view.migration.sourceAdmin} → YOUR{" "}
-                  {view.migration.targetSystem.toUpperCase()} SYSTEM
-                </span>
                 <h1>
                   {view.scope ? "Westvale’s handover" : view.migration.name}
                 </h1>
               </div>
-              <span
-                className={
-                  "gd-status " + (view.verified ? "gd-status-done" : "")
-                }
-              >
-                <span />
-                {view.verified
-                  ? "Ready for import review"
-                  : view.guidance.remaining
-                    ? "Your review needed"
-                    : "Checking the package"}
-              </span>
             </div>
             <nav className="gd-steps" aria-label="Onboarding steps">
               {[
@@ -427,34 +532,8 @@ export default function GuidedWorkspace() {
             </nav>
             {step === "understand" && (
               <>
-                <div className="gd-input-output">
-                  <div>
-                    <span className="gd-mini-label">
-                      INPUT · PREVIOUS ADMINISTRATOR
-                    </span>
-                    <h3>Client accounting workbook</h3>
-                    <p>
-                      {number(view.stats.records)} source records inspected.
-                      Original files retained.
-                    </p>
-                  </div>
-                  <ArrowRight aria-hidden="true" />
-                  <div>
-                    <span className="gd-mini-label">
-                      DESTINATION · CONFIGURED REFERENCE
-                    </span>
-                    <h3>{view.migration.targetSystem} upload template</h3>
-                    <p>
-                      Supplied template and reference mappings loaded. We
-                      prepare an Excel file; no live system connection.
-                    </p>
-                  </div>
-                </div>
                 <section className="gd-intake">
                   <div className="gd-intake-copy">
-                    <span className="gd-eyebrow">
-                      HERE’S WHAT YOU’RE TAKING OVER
-                    </span>
                     <h2>
                       The records arrived.
                       <br />
@@ -516,50 +595,15 @@ export default function GuidedWorkspace() {
                         {view.guidance.remaining} decisions need your judgement
                       </span>
                     </div>
-                    <div className="gd-intake-foot">
-                      One decision can resolve many records at once.
-                    </div>
                   </div>
                 </section>
-                <div className="gd-section-heading">
-                  <h2>Why we need your input</h2>
-                  <span>We ask about meaning, not arithmetic.</span>
-                </div>
-                <div className="gd-question-previews">
-                  {view.guidance.decisions.slice(0, 3).map((d, i) => (
-                    <button
-                      key={d.id}
-                      onClick={() => {
-                        setSelected(d.id);
-                        setStep("review");
-                      }}
-                    >
-                      <span className="gd-question-number">0{i + 1}</span>
-                      <div>
-                        <h3>{d.title}</h3>
-                        <p>
-                          {d.kind === "Deal / position"
-                            ? "Confirm where fund-level activity belongs."
-                            : d.kind === "Chart of accounts"
-                              ? "Settle a conflicting account classification."
-                              : "Confirm the correct target identity."}
-                        </p>
-                        <span>
-                          {number(d.rows)} records share this question
-                          {d.waiting ? " · Awaiting information" : ""}
-                        </span>
-                      </div>
-                      <ArrowUpRight size={19} />
-                    </button>
-                  ))}
-                </div>
+
                 {!view.guidance.remaining && (
                   <div className="gd-inline-success">
                     <CheckCircle2 size={19} />
                     No mapping decisions remain. Continue to the final checks.
                   </div>
                 )}
-                <ScopeNote view={view} />
               </>
             )}
             {step === "review" && (
@@ -624,11 +668,7 @@ export default function GuidedWorkspace() {
                           : "decisions"}{" "}
                         left
                       </h2>
-                      <p>
-                        Take one at a time.
-                        <br />
-                        We’ll update every related record.
-                      </p>
+
                       {view.guidance.decisions.slice(0, 20).map((d, i) => (
                         <button
                           key={d.id}
@@ -663,100 +703,56 @@ export default function GuidedWorkspace() {
                     </aside>
                     <section className="gd-decision">
                       <div className="gd-decision-heading">
-                        <span className="gd-eyebrow">
-                          {decision.waiting
-                            ? "AWAITING INFORMATION"
-                            : "A DECISION ONLY YOU CAN CONFIRM"}
-                        </span>
                         <span className="gd-record-count">
-                          {number(decision.rows)} related records
+                          {number(decision.rows)} affected records
                         </span>
                       </div>
                       <h2>{decision.title}</h2>
-                      <p className="gd-problem">{decision.problem}</p>
-                      <div className="gd-why">
-                        <strong>Why this matters</strong>
-                        <p>{decision.reason}</p>
-                      </div>
-                      <div className="gd-proposal">
-                        <span className="gd-mini-label">
-                          PROPOSED RESOLUTION · NOT YET APPROVED
-                        </span>
-                        <h3>
-                          {chosen
-                            ? `Use ${chosen.label}.`
-                            : "No confirmed target record is available yet."}
-                        </h3>
-                        {chosen && (
-                          <span className="gd-target-label">
-                            {chosen.label}
-                          </span>
-                        )}
-                        <p>{decision.question}</p>
-                      </div>
-                      {evidence?.rows[0] && (
-                        <div className="gd-record-example">
-                          <span className="gd-mini-label">
-                            ONE ENTRY · PROPOSED CHANGE BEFORE APPROVAL
-                          </span>
-                          <div className="gd-input-output">
-                            <div>
-                              <h3>Original record</h3>
-                              <p>{evidence.rows[0].source.account}</p>
-                              <p>{evidence.rows[0].source.transType}</p>
-                              <p>{evidence.rows[0].source.raw[18]}</p>
-                            </div>
-                            <ArrowRight aria-hidden="true" />
-                            <div>
-                              <h3>Selected destination</h3>
-                              <p>
-                                {chosen?.label || "Awaiting a reviewed match"}
-                              </p>
-                              <p>
-                                Target identifier:{" "}
-                                {chosen?.values.id ||
-                                  chosen?.values.account ||
-                                  "Not selected"}
-                              </p>
-                            </div>
-                          </div>
-                          <p>
-                            Original signed amount:{" "}
-                            {evidence.rows[0].source.currency}{" "}
-                            {evidence.rows[0].source.local}. The mapping changes
-                            classification or identity, not this amount.
-                          </p>
-                          <small>
-                            {evidence.rows[0].source.ref.sheet} · source row{" "}
-                            {evidence.rows[0].source.ref.row}
-                          </small>
-                        </div>
-                      )}
-                      <div className="gd-agent">
+                      <p className="gd-decision-problem">{decision.problem}</p>
+                      <div className="gd-agent gd-agent-featured">
                         <div className="gd-agent-heading">
                           <span>
                             <Sparkles size={16} />
                             {hasModel
                               ? "Gemini’s investigation"
-                              : "Let the assistant check the evidence"}
+                              : view.aiConfigured
+                                ? "Gemini decision advice"
+                                : "Reference evidence assistant"}
                           </span>
-                          {suggestion && (
-                            <small>
-                              {hasModel
-                                ? "Live Gemini response"
-                                : "Reference evidence"}
-                            </small>
-                          )}
                         </div>
                         {suggestion ? (
                           <div>
-                            <p>{suggestion.explanation}</p>
+                            {suggestion.advice ? (
+                              <dl className="gd-advice">
+                                <div>
+                                  <dt>Recommendation</dt>
+                                  <dd>{suggestion.advice.recommendation}</dd>
+                                </div>
+                                <div>
+                                  <dt>Supporting evidence</dt>
+                                  <dd>{suggestion.advice.evidence}</dd>
+                                </div>
+                                <div>
+                                  <dt>What’s still uncertain</dt>
+                                  <dd>{suggestion.advice.uncertainty}</dd>
+                                </div>
+                                <div>
+                                  <dt>Your next action</dt>
+                                  <dd>{suggestion.advice.nextAction}</dd>
+                                </div>
+                              </dl>
+                            ) : (
+                              <p>{suggestion.explanation}</p>
+                            )}
                             {suggestion.trace && (
-                              <ul>
-                                {suggestion.trace.map((line) => (
-                                  <li key={line}>{line}</li>
-                                ))}
-                              </ul>
+                              <details className="gd-advice-trace">
+                                <summary>Evidence inspected</summary>
+                                <ul>
+                                  {suggestion.trace.map((line) => (
+                                    <li key={line}>{line}</li>
+                                  ))}
+                                </ul>
+                              </details>
                             )}
                             {!suggestion.candidates.length && (
                               <strong>
@@ -767,13 +763,13 @@ export default function GuidedWorkspace() {
                           </div>
                         ) : (
                           <p>
-                            Inspect source descriptions and the reference
-                            mappings before you decide. The assistant can
-                            recommend a match; it cannot approve one.
+                            Get a recommendation, the evidence behind it and a
+                            specific next step. Gemini will identify what still
+                            needs your confirmation.
                           </p>
                         )}
                         <button
-                          className="gd-secondary"
+                          className="gd-primary"
                           disabled={!!busy || !evidence}
                           onClick={() =>
                             act("investigate", { mappingId: decision.id })
@@ -781,7 +777,9 @@ export default function GuidedWorkspace() {
                         >
                           <Sparkles size={14} />
                           {suggestion
-                            ? "Investigate again"
+                            ? view.aiConfigured
+                              ? "Refresh Gemini advice"
+                              : "Refresh reference evidence"
                             : view.aiConfigured
                               ? "Investigate with Gemini"
                               : "Inspect the reference evidence"}
@@ -793,6 +791,16 @@ export default function GuidedWorkspace() {
                           </small>
                         )}
                       </div>
+                      {evidence?.rows[0] ? (
+                        <DecisionComparison
+                          kind={decision.kind}
+                          source={evidence.rows[0].source}
+                          chosen={chosen}
+                        />
+                      ) : (
+                        <p>Loading the original fields…</p>
+                      )}
+
                       <details className="gd-evidence">
                         <summary>
                           Show me the evidence
@@ -894,8 +902,8 @@ export default function GuidedWorkspace() {
                                 onChange={(e) => setConfirmed(e.target.checked)}
                               />
                               <span>
-                                I’ve reviewed the evidence and confirm this
-                                choice.
+                                I confirm the selected destination is correct
+                                for all affected records.
                               </span>
                             </label>
                             <label className="gd-note-label">
@@ -948,14 +956,7 @@ export default function GuidedWorkspace() {
                                 Ask previous administrator
                               </button>
                             </div>
-                            <span className="gd-impact">
-                              {candidate === decision.candidate?.id &&
-                              decision.unlocks !== undefined
-                                ? decision.unlocks
-                                  ? `Approving this makes ${number(decision.unlocks)} more records ready.`
-                                  : "This resolves one dependency. Other decisions still hold the affected records."
-                                : "Approving applies your selected record to all related entries and reruns the checks."}
-                            </span>
+
                             <details className="gd-alternate">
                               <summary>Need a different target record?</summary>
                               <label>
@@ -1201,7 +1202,6 @@ export default function GuidedWorkspace() {
         )}
         {view && (
           <footer className="gd-footer">
-            <span>Human judgement. Verified numbers. A clear handover.</span>
             <a
               href={view ? `/advanced?case=${view.migration.id}` : "/advanced"}
             >
@@ -1355,4 +1355,91 @@ function CheckLine({ pass, text }: { pass: boolean; text: string }) {
 }
 function ClockLabel() {
   return <MessageSquare size={15} />;
+}
+
+function DecisionComparison({
+  kind,
+  source,
+  chosen,
+}: {
+  kind: Mapping["kind"];
+  source: SourceRecord;
+  chosen?: Candidate;
+}) {
+  const v = chosen?.values;
+  const blank = (value?: string) => value || "Not provided";
+  const target = (value?: string) =>
+    chosen ? value || "None selected" : "Choose a destination";
+  const rows: [string, string, string][] =
+    kind === "Chart of accounts"
+      ? [
+          ["Accounting category", blank(source.account), target(v?.account)],
+          ["Transaction type", blank(source.transType), target(v?.transType)],
+        ]
+      : kind === "Deal / position"
+        ? [
+            ["Deal / activity", blank(source.deal), target(v?.name)],
+            [
+              "Specific holding (position)",
+              blank(source.position),
+              chosen
+                ? v?.position || "No specific investment holding"
+                : "Choose a destination",
+            ],
+            [
+              "Holding identifier",
+              blank(source.raw[8]),
+              chosen
+                ? v?.positionId || "No holding identifier"
+                : "Choose a destination",
+            ],
+          ]
+        : kind === "Investor"
+          ? [
+              ["Investor", blank(source.investor), target(v?.name)],
+              ["Investor identifier", blank(source.externalId), target(v?.id)],
+            ]
+          : [
+              ["Fund / legal entity", blank(source.entity), target(v?.name)],
+              [
+                "Destination identifier",
+                "Uses the old system’s identity",
+                target(v?.id),
+              ],
+            ];
+  return (
+    <section
+      className="gd-decision-comparison"
+      aria-label="Original fields and proposed destination"
+    >
+      <div className="gd-comparison-title">
+        <h3>What would change</h3>
+      </div>
+      <div className="gd-comparison-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Original file</th>
+              <th>Selected destination</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, before, after]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td>{before}</td>
+                <td>{after}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <small>
+        {source.ref.sheet} · source row {source.ref.row}. This is one example
+        from the affected records.
+      </small>
+    </section>
+  );
 }

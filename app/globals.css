@@ -200,7 +200,7 @@ p {
   padding: 0 5px;
   background: #e3e8ef;
   border-radius: 3px;
-  color: #4f46cc;
+  color: #244b70;
 }
 .alert-count {
   color: #a16e3b;
@@ -224,7 +224,7 @@ p {
   padding: 13px 10px;
   margin: 0 2px 23px;
   font-size: 10px;
-  color: #4f46cc;
+  color: #244b70;
 }
 .trust-note svg {
   flex-shrink: 0;
@@ -287,7 +287,7 @@ p {
   align-items: center;
 }
 .topbar strong {
-  color: #4f46cc;
+  color: #244b70;
 }
 .topbar button {
   padding: 0;
@@ -357,7 +357,7 @@ main {
 .secondary {
   border: 1px solid #e3e8ef;
   background: white;
-  color: #4f46cc;
+  color: #244b70;
   box-shadow: 0 1px 2px #0a254005;
 }
 .secondary:hover:not(:disabled) {
@@ -478,13 +478,13 @@ td {
   padding: 17px 18px;
   border-bottom: 1px solid #f4f6fa;
   vertical-align: middle;
-  color: #4f46cc;
+  color: #244b70;
 }
 tbody tr:last-child td {
   border-bottom: 0;
 }
 td strong {
-  color: #4f46cc;
+  color: #244b70;
 }
 td small {
   margin-top: 4px;
@@ -541,7 +541,7 @@ tr.clickable:hover {
   background: currentColor;
 }
 .badge.green {
-  color: #4f46cc;
+  color: #244b70;
   background: #f4f6fa;
   border-color: #f4f6fa;
 }
@@ -642,7 +642,7 @@ tr.clickable:hover {
   margin-left: auto;
   white-space: nowrap;
   font-size: 11px;
-  color: #4f46cc;
+  color: #244b70;
 }
 .principles {
   display: grid;
@@ -753,7 +753,7 @@ footer > span:first-child {
   color: #596b82;
 }
 .pipeline button.current {
-  color: #4f46cc;
+  color: #244b70;
   font-weight: 600;
 }
 .pipeline button.current > span {
@@ -847,7 +847,7 @@ footer > span:first-child {
   gap: 6px;
 }
 .readiness-description b {
-  color: #4f46cc;
+  color: #244b70;
   font-weight: 500;
   margin-left: 5px;
 }
@@ -1025,7 +1025,7 @@ footer > span:first-child {
 .filter-tabs button.selected {
   background: #f4f6fa;
   border-color: #e3e8ef;
-  color: #4f46cc;
+  color: #244b70;
 }
 .search {
   display: flex;
@@ -1526,7 +1526,7 @@ footer > span:first-child {
   display: block;
   font-size: 23px;
   font-weight: 500;
-  color: #4f46cc;
+  color: #244b70;
   margin-bottom: 3px;
 }
 .amber-info {
@@ -2239,8 +2239,8 @@ footer > span:first-child {
   --ink: #0a2540;
   --muted: #596b82;
   --border: #e3e8ef;
-  --green: #635bff;
-  --green-light: #eeedff;
+  --green: #244b70;
+  --green-light: #edf2f7;
 }
 body {
   -webkit-font-smoothing: antialiased;
@@ -2250,25 +2250,25 @@ body {
   border-right: 1px solid var(--border);
 }
 .nav-item.active {
-  background: #eeedff;
-  color: #5147cf;
+  background: #edf2f7;
+  color: #244b70;
 }
 .primary {
-  background: #635bff;
-  border-color: #635bff;
+  background: #244b70;
+  border-color: #244b70;
   color: white;
 }
 .primary:hover:not(:disabled) {
-  background: #5147e5;
+  background: #244b70;
 }
 input:focus,
 select:focus,
 textarea:focus,
 button:focus-visible {
-  outline-color: #a9a3ff;
+  outline-color: #9caec2;
 }
 input[type="checkbox"] {
-  accent-color: #635bff;
+  accent-color: #244b70;
 }
 
 /* Display the supplied logo's artwork without its transparent outer margin. */

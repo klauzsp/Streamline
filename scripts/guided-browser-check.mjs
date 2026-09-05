@@ -15,6 +15,9 @@ await page.goto("http://127.0.0.1:3000", { waitUntil: "networkidle" });
 await page.screenshot({ path: "artifacts/guided-home.png", fullPage: true });
 await page.getByRole("button", { name: "Try the 3-minute demo" }).click();
 await page
+  .getByRole("button", { name: "Open Westvale’s handover", exact: true })
+  .click();
+await page
   .getByRole("heading", { name: "Westvale’s handover" })
   .waitFor({ timeout: 60000 });
 const caseId = new URL(page.url()).searchParams.get("case");
@@ -23,7 +26,7 @@ await page.screenshot({ path: "artifacts/guided-intake.png", fullPage: true });
 await page.getByRole("button", { name: "Review the two decisions" }).click();
 await page
   .getByRole("heading", {
-    name: "Where should everyday fund activity go?",
+    name: "Do these entries belong to the fund or a specific investment?",
     exact: true,
   })
   .waitFor();
@@ -44,7 +47,7 @@ if (result.stats.eligible !== 132 || result.verified)
   throw Error("Request incorrectly released records");
 await page
   .locator(".gd-decision-nav")
-  .getByRole("button", { name: /Where should everyday fund activity go/ })
+  .getByRole("button", { name: /Do these entries belong to the fund/ })
   .click();
 await page
   .getByLabel("Administrator response / reviewer note (required)")
@@ -129,7 +132,12 @@ result = await page.evaluate(async (id) => {
     throw new Error("Persistence request failed: " + response.status);
   return response.json();
 }, caseId);
-if (process.env.TEST_LIVE_GEMINI === "true" && !Object.values(result.migration.suggestions).some((s) => s.provider.startsWith("Gemini") && s.trace?.length >= 2))
+if (
+  process.env.TEST_LIVE_GEMINI === "true" &&
+  !Object.values(result.migration.suggestions).some(
+    (s) => s.provider.startsWith("Gemini") && s.trace?.length >= 2,
+  )
+)
   throw Error("Two-stage live investigation was not recorded");
 if (!result.verified || result.guidance.remaining !== 0)
   throw Error("Approvals did not persist");

@@ -7,14 +7,14 @@ export function decisionCopy(mapping: Mapping) {
     mapping.detail.startsWith("Operations (")
   )
     return {
-      title: "Where should everyday fund activity go?",
+      title: "Do these entries belong to the fund or a specific investment?",
       problem:
-        "The old system uses a position label, but supplies no position ID. We need to confirm which record should hold this fund-level activity in your system.",
+        "The source names an investment holding but does not identify it with an ID. Confirm whether these entries need a specific holding, or belong to the fund’s general operations.",
       recommendation: `Use ${proposed?.values.name || "the operations record"} without an investment position.`,
       reason:
         "This connects fund-level entries to an existing operations record, instead of inventing a missing investment.",
       question:
-        "Can you confirm that these are fund-level entries and do not require an investment position?",
+        "Check whether all affected entries are general fund activity. If any belong to a specific investment, request its identifier before approving.",
       approval: "Use the operations record",
       approvalNote:
         "I reviewed the source evidence and confirm these are fund-level entries. Use the proposed operations deal with no investment position.",
@@ -35,7 +35,8 @@ export function decisionCopy(mapping: Mapping) {
         : "Ask the previous administrator for the intended account and transaction type.",
       reason:
         "The classification determines where the client’s historical activity appears in your accounting system. A matching amount alone cannot settle this decision.",
-      question: "Does the source evidence support this account classification?",
+      question:
+        "Check the transaction descriptions or supporting documents. Do they support the selected accounting category? Matching amounts alone do not confirm the category.",
       approval: "Confirm this classification",
       approvalNote:
         "I reviewed the transaction description and reference proposal and confirm the proposed target account and transaction type.",

@@ -159,6 +159,12 @@ export type Migration = {
       provider: string;
       confidence?: number;
       trace?: string[];
+      advice?: {
+        recommendation: string;
+        evidence: string;
+        uncertainty: string;
+        nextAction: string;
+      };
     }
   >;
   audit: AuditEvent[];

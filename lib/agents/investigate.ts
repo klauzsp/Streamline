@@ -65,6 +65,8 @@ export async function investigate(
     phase: "conclude",
     mapping: evidence.mapping,
     retrieved,
+    affectedRecords: m.rowIds.length,
+    sampleSize: evidence.sourceRows.length,
   });
   const allowed = new Set(candidates.map((c) => c.id));
   if (answer.candidateIds.some((id) => !allowed.has(id)))
@@ -74,6 +76,7 @@ export async function investigate(
     explanation: answer.explanation,
     provider: "Gemini · " + (process.env.AI_PROVIDER || "vertex"),
     confidence: answer.confidence,
+    advice: answer.advice,
     trace,
   };
 }
