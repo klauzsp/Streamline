@@ -30,6 +30,7 @@ import type {
   TargetRecord,
 } from "@/types";
 import "./guided.css";
+import "./analysis-theme.css";
 type Step = "understand" | "review" | "finish";
 type Evidence = {
   mapping: Mapping;
@@ -294,6 +295,7 @@ export default function GuidedWorkspace() {
     setRequestOpen(true);
   }
   const suggestion = decision && view?.migration.suggestions[decision.id];
+  const investigating = busy === "Gemini is inspecting source evidence";
   const hasModel = !!suggestion?.provider.startsWith("Gemini");
   const chosen = evidence?.catalog.find((c) => c.id === candidate);
   const exact = view?.mappings.filter((m) => m.status === "Exact").length || 0;
@@ -595,13 +597,6 @@ export default function GuidedWorkspace() {
                     </div>
                   </div>
                 </section>
-
-                {!view.guidance.remaining && (
-                  <div className="gd-inline-success">
-                    <CheckCircle2 size={19} />
-                    No mapping decisions remain. Continue to the final checks.
-                  </div>
-                )}
               </>
             )}
             {step === "review" && (
@@ -768,19 +763,32 @@ export default function GuidedWorkspace() {
                         )}
                         <button
                           className="gd-primary"
+                          aria-busy={investigating}
                           disabled={!!busy || !evidence}
                           onClick={() =>
                             act("investigate", { mappingId: decision.id })
                           }
                         >
-                          <Sparkles size={14} />
-                          {suggestion
-                            ? view.aiConfigured
-                              ? "Refresh Gemini advice"
-                              : "Refresh reference evidence"
-                            : view.aiConfigured
-                              ? "Investigate with Gemini"
-                              : "Inspect the reference evidence"}
+                          {investigating ? (
+                            <Loader2
+                              size={16}
+                              className="spin"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Sparkles size={14} aria-hidden="true" />
+                          )}
+                          <span aria-live="polite">
+                            {investigating
+                              ? "Investigating…"
+                              : suggestion
+                                ? view.aiConfigured
+                                  ? "Refresh Gemini advice"
+                                  : "Refresh reference evidence"
+                                : view.aiConfigured
+                                  ? "Investigate with Gemini"
+                                  : "Inspect the reference evidence"}
+                          </span>
                         </button>
                         {!view.aiConfigured && (
                           <small>

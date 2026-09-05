@@ -1,127 +1,55 @@
 # Streamline
 
-A fund administration migration MVP built around the supplied Kestrel workbooks.
+Streamline helps fund administrators prepare a new client’s accounting records for their own system.
 
-**Upload → Understand → Map → Reconcile → Review → Export**
+When a fund changes administrators, its historical records arrive with the old system’s names, identifiers and accounting categories. Streamline translates those records into the destination’s format, highlights uncertain matches for review, and checks that the amounts are preserved.
 
-## Run
+## How it works
+
+1. **Load the records.** Use the supplied demo or upload a supported accounting workbook.
+2. **Review decisions.** Inspect the original fields and proposed destination. Approve a match or request clarification.
+3. **Check the numbers.** Code compares original and prepared amounts, including debit/credit totals and record coverage.
+4. **Export.** Download the prepared Excel file with reconciliation checks and a migration summary. A detailed audit package includes mappings, decisions and source references.
+
+Unresolved decisions and failed checks block verified export. Original source files are retained.
+
+## Gemini’s role
+
+Gemini investigates a bounded sample of source records and reference mappings. It provides a recommendation, supporting evidence, uncertainty and a concrete next action. Suggestions are validated against existing target candidates.
+
+**AI advises. Code checks the numbers. The administrator approves.**
+
+## The demo
+
+Click **Try the 3-minute demo** for an introduction to Westvale’s handover, then review **528 accounting records and two decisions**:
+
+- Whether entries belong to general fund operations or a specific investment.
+- Whether entries labelled as bank interest should be classified as administration fees.
+
+The demo uses one complete fund from the supplied anonymised dataset. The destination template and reference mappings are preconfigured for Corvus. It produces an Excel package; it does not connect to a live fund administration system.
+
+## Run locally
+
+Requires Node.js 22+ and Python 3.
 
 ```bash
 npm install
 npm run preprocess
-npm run build
-npm start
+npm run dev
 ```
 
-Open **http://localhost:3000** and select **Try the 3-minute demo**.
+Open **http://localhost:3000**. Development mode updates the UI when you save.
 
-For development, use `npm run dev`. The scripts use Next.js's webpack compiler because Turbopack's CSS worker cannot bind its internal port in this workspace's sandbox. Stop the development server before building; use the production server for the demo.
-
-Requires Node.js 22+ and Python 3 with the standard library. No Python packages, database, AI key or Daytona account are required. On macOS the reader uses `/usr/bin/python3`; set `PYTHON_PATH` to override it. Launch commands from the repository root so the reader can find `data/` and `scripts/`.
-
-## What works
-
-- Multiple migration cases, a dashboard, and a drag-and-drop creation form.
-- Deterministic XLSX inspection and cached demo processing of **33,902 source records**.
-- Entity, investor, deal/position and chart-of-accounts crosswalks from the reference workbook.
-- Exact, suggested, missing, requires-review and approved mapping states; candidate selection, reviewer rationale, request-information and reopening actions.
-- Exception investigation using reference evidence offline, or Gemini when configured.
-- Batch override using the lowest numeric priority from Batch Preference; incomplete transaction mappings hold their batch.
-- Both local and entity-currency reconciliation, separated by entity, mapped account and currency. Checks cover net movements, gross debits/credits and row completeness.
-- Source evidence drawers, per-field provenance, persistent decision history and audit events.
-- A regenerated three-tab XLSX package (Upload Template, Reconciliation and Migration Summary), with an optional 12-tab detailed audit download, with verified export blocked until every source row is eligible and every check passes. Draft review packages remain available.
-
-The reference **Upload Template is never used to generate loader records**. Source files are not modified.
-
-## Three-minute demo — start here
-
-Open **http://localhost:3000** and click **Try the 3-minute demo**. You are the incoming administrator onboarding Westvale from Legacy Admin into Corvus.
-
-1. **Understand the handover.** All **528 real source records for Westvale** are included. There are **two decisions**, not a queue of 150 exceptions.
-2. **Review the first decision.** Confirm whether everyday fund activity belongs in the GBP operations record without an investment position. Inspect the evidence, tick the confirmation and approve. Ready records rise from **132 to 484**.
-3. **Review the second decision.** An account says “Interest Income – Bank”, while its transaction type says “Administration Fees”. Use **Investigate with Gemini**, inspect the evidence and confirm the appropriate classification. The final batch is released: **528 of 528 records ready**.
-4. **Check & download.** All **28 amount checks** pass. Download a **verified demo package** containing the loader and audit evidence. Nothing is uploaded to Corvus.
-
-If you do not know an answer, choose **Ask previous administrator**. The app prepares a specific request with original source references. **Save & download request** records it locally and downloads a text draft; it sends no email. The rows remain held. When confirmation arrives, enter the administrator's response, review the target and approve. The demo does not fabricate a reply.
-
-This is a complete legal-entity slice, with every Westvale batch intact. The other **33,374 records** in the original workbook are outside this demo's scope. That scope is disclosed in the UI and the exported Migration Summary; no full-workbook verification is claimed.
-
-The original detailed interface is still available at **/advanced**, including uploads, the entire source workbook, exception tables, mapping edits and source provenance. A **Detailed workspace** link opens the current case there. Existing cases and decisions are preserved.
-
-## Gemini later
-
-Copy `.env.example` to `.env.local`, then choose one configuration and restart the server.
-
-**Gemini Developer API / AI Studio key:**
-
-```dotenv
-AI_PROVIDER=gemini
-GEMINI_API_KEY=your-key
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-**Vertex AI with application default credentials:**
-
-```dotenv
-AI_PROVIDER=vertex
-GOOGLE_CLOUD_PROJECT=your-project
-GOOGLE_CLOUD_LOCATION=global
-GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-Alternatively, Vertex Express mode accepts `AI_PROVIDER=vertex` plus its own `GEMINI_API_KEY`, without a project. An AI Studio key and a Vertex key are different provider configurations. The model name is configurable.
-
-The adapter runs a bounded two-stage investigation only when a reviewer starts one: Gemini selects evidence tools, code retrieves source rows and allowed candidates (plus mapping references when requested), and Gemini returns a recommendation or abstains. The UI shows the executed retrieval steps. Responses are validated with Zod; invented candidate IDs are rejected. Source and candidate checks always run before the conclusion. AI never calculates totals or approves a mapping. Vertex AI authentication and structured responses have been verified with a synthetic connection test and, with user authorization, a bounded sample from the supplied administration-fee mapping gap. The returned candidate passed schema and catalog validation; the test did not approve or persist mapping changes.
-
-Daytona is not used: local processing already handles this dataset. No supplied credential is stored in this project.
-
-## Data and implementation
-
-Read [dataset findings and architecture](docs/architecture.md) and [raw inspection results](docs/workbook-inspection.json).
-
-| Module                     | Responsibility                                                      |
-| -------------------------- | ------------------------------------------------------------------- |
-| `scripts/read_workbook.py` | Read raw XLSX XML values as strings, retaining original row numbers |
-| `lib/excel`                | Reader bridge and workbook export                                   |
-| `lib/migration`            | Canonical records, transformation, persistence and view models      |
-| `lib/mappings`             | Composite-key crosswalks and deterministic IDs                      |
-| `lib/reconciliation`       | Exact decimal arithmetic and coverage checks                        |
-| `lib/agents`               | Bounded evidence tools and investigation                            |
-| `lib/vertex`               | Server-side Gemini / Vertex adapter and response schema             |
-| `types`                    | Canonical domain types                                              |
-| `app`                      | Review UI and API routes                                            |
-
-Local cases, decisions and caches live in `.local/`, which is gitignored. Decisions are saved atomically, serialized per case within one process, and protected by revision checks. Existing demo cases use the versioned demo dataset cache. This is a local, single-user application; it has no authentication or distributed locking.
-
-Monetary amounts remain exact decimal strings from the XLSX XML through Decimal.js and the generated workbook. Excel amount cells intentionally contain **text**, avoiding a binary floating-point roundtrip. Two-decimal displays are presentation only; evidence drawers show exact values. The source signed amount becomes an absolute loader amount plus `Is Debit`, and reconciliation reconstructs the signed target value from those loader fields.
-
-The target sample supplies its single investor allocation rule (`Eastbury Trentbeck`); source allocation values remain available in the raw record. Quantity and supplier defaults follow the account crosswalk. A live Corvus import adapter, numeric-cell rounding policy and target-system master-data creation remain outside this MVP.
-
-New uploads support the supplied 43-column investor-level GL schema, using the provided crosswalks and target sample. Unsupported layouts and non-XLSX files are rejected explicitly. This MVP does not claim arbitrary Excel/PDF parsing.
-
-## Validate
+For Gemini, copy `.env.example` to `.env.local` and configure either Vertex AI credentials or a Gemini API key. Restart the server after changing environment settings. Without AI credentials, reference-based investigation remains available.
 
 ```bash
-npm test
-npm run build
+npm test          # Validate the migration logic
+npm run build    # Build for production; stop the dev server first
+npm start        # Serve the production build
 ```
 
-Tests cover full-dataset coverage, an actual approval increasing readiness, sub-cent amounts, debit/credit signs, zero-net missing rows, changed target amounts, batch priorities, invalid source data, approval reopening, export gating, workbook roundtrips and AI JSON validation.
+## MVP scope
 
-For browser checks, start the production server first:
+Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. This is a local, single-user hackathon application. Uploads support the supplied accounting layout, not arbitrary spreadsheets. Live imports and destination-system record creation are outside its scope.
 
-```bash
-npx playwright install chromium
-npm run test:browser
-```
-
-Optionally set `CHROMIUM_PATH` to an existing Chromium executable. The browser check creates a scoped Westvale case and verifies requests, both approvals, the verified download, persistence and mobile layout. Screenshots and exported workbooks are saved in `artifacts/`. Test reviewer notes are explicitly labelled. Set `TEST_LIVE_GEMINI=true` to exercise a live, bounded source-evidence investigation as part of that test.
-
-## Implementation references
-
-- [Google: structured JSON generation](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/generativeaionvertexai-gemini-controlled-generation-response-schema-2)
-- [Google: express-mode REST endpoints](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/express-mode/api-reference)
-- [SheetJS: official current package distribution](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/)
-
-The guided demo now shows the configured destination alongside the incoming records, one source-entry comparison with the selected destination, and an expandable completion check and approval trail. Alternative selections update the proposal and reviewer record; an empty AI recommendation clears the selection and confirmation.
+See [the dataset README](data/README.md) and [architecture notes](docs/architecture.md) for details.
