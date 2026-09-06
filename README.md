@@ -1,5 +1,7 @@
 # Streamline
 
+![Streamline](streamline.png)
+
 Streamline helps fund administrators prepare a new client’s accounting records for their own system.
 
 When a fund changes administrators, its historical records arrive with the old system’s names, identifiers and accounting categories. Streamline translates those records into the destination’s format, highlights uncertain matches for review, and checks that the amounts are preserved.
