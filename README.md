@@ -1,6 +1,6 @@
 # Streamline
 
-**[Watch the demo video](https://drive.google.com/file/d/1HTidcZxnLKG4ntgQkLcrGIKqJHA9WuIK/view?usp=sharing)** · **[Try the live app](https://streamline-teal-eta.vercel.app)**
+**[Watch the demo video](https://drive.google.com/file/d/1HTidcZxnLKG4ntgQkLcrGIKqJHA9WuIK/view?usp=sharing)** , **[Try the live app](https://streamline-teal-eta.vercel.app)**
 
 ![Streamline](streamline.png)
 
