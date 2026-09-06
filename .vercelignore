@@ -1,4 +1,5 @@
 .local
+.generated
 artifacts
 .env*
 .git

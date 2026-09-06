@@ -1,9 +1,26 @@
 import { Dataset } from "@/types";
 import { demoDataset } from "./dataset";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 export const DEMO_ENTITY = "Kestrel Westvale Co-Invest LP";
 /** A complete legal entity, not a cherry-picked set of passing rows. */
 export async function guidedDemoDataset(): Promise<Dataset> {
-  const original = await demoDataset();
+  if (process.env.VERCEL) {
+    try {
+      return JSON.parse(
+        await readFile(
+          path.join(process.cwd(), ".generated/westvale-demo.json"),
+          "utf8",
+        ),
+      );
+    } catch (error) {
+      // Older deployments can still use the original workbook-loading path.
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
+  return selectWestvale(await demoDataset());
+}
+export function selectWestvale(original: Dataset): Dataset {
   const records = original.records.filter((r) => r.entity === DEMO_ENTITY);
   if (!records.length)
     throw new Error("Westvale demo entity not found in the supplied workbook.");

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "npm run prepare:demo && next build --webpack",
+    "prepare:demo": "node --import tsx scripts/prepare-demo.ts",
     "start": "next start",
     "test": "node --import tsx --test tests/*.test.ts",
     "preprocess": "node --import tsx scripts/preprocess.ts",
