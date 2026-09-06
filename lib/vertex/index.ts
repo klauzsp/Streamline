@@ -63,7 +63,10 @@ export async function reason(evidence: unknown) {
       },
       contents: [{ role: "user", parts: [{ text: JSON.stringify(evidence) }] }],
       generationConfig: {
-        temperature: 0.1,
+        temperature: model.startsWith("gemini-3") ? 1 : 0.1,
+        ...(model.startsWith("gemini-3")
+          ? { thinkingConfig: { thinkingLevel: "low" }, maxOutputTokens: 4096 }
+          : {}),
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
