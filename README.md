@@ -52,7 +52,7 @@ npm start        # Serve the production build
 
 ## MVP scope
 
-Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. This is a single-user hackathon application without user accounts. Uploads support the supplied accounting layout, not arbitrary spreadsheets. Live imports and destination-system record creation are outside its scope.
+Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. This is a single-user hackathon application without user accounts. Uploads support the supplied accounting layout, so arbitrary spreadsheets cannot be used for this version. Live imports and destination-system record creation are outside its scope.
 
 ## Vercel
 
