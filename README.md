@@ -1,5 +1,7 @@
 # Streamline
 
+**[Watch the demo video](https://drive.google.com/file/d/1HTidcZxnLKG4ntgQkLcrGIKqJHA9WuIK/view?usp=sharing)** · **[Try the live app](https://streamline-teal-eta.vercel.app)**
+
 ![Streamline](streamline.png)
 
 Streamline helps fund administrators prepare a new client’s accounting records for their own system.
@@ -59,7 +61,5 @@ Built with Next.js, TypeScript, Gemini, Decimal.js and Excel processing tools. T
 On Vercel, cases and datasets use a connected private Blob store; local development continues to use `.local`. Browser uploads go directly to private storage to support files up to 30 MB. Conditional writes prevent one review from overwriting a newer saved decision.
 
 Connect a private Vercel Blob store for `BLOB_READ_WRITE_TOKEN`. For hosted Gemini, set `AI_PROVIDER=gemini`, store `GEMINI_API_KEY` as a sensitive production environment variable, and set `GEMINI_MODEL=gemini-3.5-flash`. Then run `npx vercel --prod`. The supplied workbooks are bundled; local credentials and saved cases are excluded. Local development can continue using Vertex AI through your Mac’s Google login.
-
-https://streamline-teal-eta.vercel.app
 
 See [the dataset README](data/README.md) and [architecture notes](docs/architecture.md) for details.
